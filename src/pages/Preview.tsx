@@ -98,10 +98,7 @@ export const Preview: React.FC = () => {
 
               {/* Introduction */}
               <p>
-                I am writing to document the medical necessity for{' '}
-                {letterData.patient?.firstName} {letterData.patient?.lastName}'s treatment. This letter
-                provides comprehensive information about the patient's condition, treatment history, and
-                the medical necessity for the requested treatment.
+                {letterData.template?.intro}
               </p>
 
               {/* Diagnosis */}

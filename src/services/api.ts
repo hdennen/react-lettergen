@@ -30,9 +30,15 @@ class ApiService {
 
   async getTemplates(productId: string): Promise<LetterTemplate[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/products/${productId}/templates`);
+      const response = await fetch(`${this.baseUrl}/templates/byProduct/${productId}`);
       if (!response.ok) throw new Error('Failed to fetch templates');
-      return await response.json();
+
+      const data = await response.json();
+      const templates = data.map(this.transformResponse);
+      console.log('templates:');
+      console.log(templates);
+        
+      return templates
     } catch (error) {
       // Return mock data for demo
       return [
@@ -42,6 +48,9 @@ class ApiService {
           productId,
           isDefault: true,
           type: 'medical_necessity',
+          intro: '...',
+          rationale: '...',
+          version: '...',
           content: '...',
         },
         {
@@ -50,10 +59,30 @@ class ApiService {
           productId,
           isDefault: true,
           type: 'appeal',
+          intro: '...',
+          rationale: '...',
+          version: '...',
           content: '...',
         },
       ];
     }
+  }
+
+  private transformResponse(data: any): LetterTemplate {
+    console.log('raw template response data:');
+    console.log(data);
+
+    return {
+      id: data.id,
+      name: data.title,
+      productId: data.productId,
+      isDefault: data.isDefault,
+      type: data.type,
+      intro: data.intro,
+      rationale: data.rationale,
+      version: data.version,
+      content: data.content,
+    };
   }
 }
 

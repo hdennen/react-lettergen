@@ -11,6 +11,9 @@ export interface LetterTemplate {
   productId: string;
   isDefault: boolean;
   type: 'medical_necessity' | 'appeal';
+  intro: string;
+  rationale: string;
+  version: string;
   content: string;
 }
 
@@ -90,7 +93,7 @@ export interface TreatmentHistory {
 }
 
 export interface LetterData {
-  templateId: string;
+  template: LetterTemplate | null;
   letterDate: string;
   provider: Provider;
   practice: Practice;
@@ -98,5 +101,6 @@ export interface LetterData {
   insurance: Insurance;
   diagnosis: Diagnosis;
   treatmentHistory: TreatmentHistory;
+  introduction: string;
   finalRationale: string;
 }

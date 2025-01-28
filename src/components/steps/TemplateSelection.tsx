@@ -2,6 +2,7 @@ import React from 'react';
 import { useLetterStore } from '../../store/letterStore';
 import { CalendarIcon } from 'lucide-react';
 import { useProductStore } from '../../store/productStore';
+import { LetterTemplate } from '../../types';
 
 interface TemplateSelectionProps {
   productId: string;
@@ -17,8 +18,8 @@ export const TemplateSelection: React.FC<TemplateSelectionProps> = ({ productId 
 
   const productTemplates = templates[productId] || [];
 
-  const handleTemplateSelect = (templateId: string) => {
-    updateLetterData({ templateId });
+  const handleTemplateSelect = (template: LetterTemplate) => {
+    updateLetterData({ template });
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,11 +48,11 @@ export const TemplateSelection: React.FC<TemplateSelectionProps> = ({ productId 
           <div
             key={template.id}
             className={`relative rounded-lg border p-4 cursor-pointer transition-colors ${
-              letterData.templateId === template.id
+              letterData.template?.id === template.id
                 ? 'border-blue-600 bg-blue-50'
                 : 'border-gray-200 hover:border-blue-600'
             }`}
-            onClick={() => handleTemplateSelect(template.id)}
+            onClick={() => handleTemplateSelect(template)}
           >
             <div className="flex items-center justify-between">
               <div>

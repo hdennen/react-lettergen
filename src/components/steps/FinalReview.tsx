@@ -158,18 +158,52 @@ export const FinalReview: React.FC = () => {
           6
         )}
 
+        {/* Introduction */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex justify-between items-center mb-4">
+            <label htmlFor="introduction" className="block text-sm font-medium text-gray-700">
+              Letter Introduction
+            </label>
+            {letterData.template?.intro && (
+              <button
+                onClick={() => updateLetterData({ introduction: letterData.template?.intro })}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Use Template Introduction
+              </button>
+            )}
+          </div>
+          <textarea
+            id="introduction"
+            rows={6}
+            value={letterData.introduction || ''}
+            onChange={(e) => updateLetterData({ introduction: e.target.value })}
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            required
+          />
+        </div>
+
         {/* Final Rationale */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <label htmlFor="finalRationale" className="block text-sm font-medium text-gray-700 mb-4">
-            Final Rationale for Medical Necessity
-          </label>
+          <div className="flex justify-between items-center mb-4">
+            <label htmlFor="finalRationale" className="block text-sm font-medium text-gray-700">
+              Final Rationale for Medical Necessity
+            </label>
+            {letterData.template?.rationale && (
+              <button
+                onClick={() => updateLetterData({ finalRationale: letterData.template?.rationale })}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Use Template Rationale
+              </button>
+            )}
+          </div>
           <textarea
             id="finalRationale"
             rows={6}
             value={letterData.finalRationale || ''}
             onChange={handleFinalRationaleChange}
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            placeholder="Provide a comprehensive summary of why this treatment is medically necessary, incorporating the patient's history, failed treatments, and current medical needs..."
             required
           />
         </div>
