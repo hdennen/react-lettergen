@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLetterStore } from '../../store/letterStore';
 import { CalendarIcon } from 'lucide-react';
-import type { LetterTemplate } from '../../types';
+import { useProductStore } from '../../store/productStore';
 
 interface TemplateSelectionProps {
   productId: string;
@@ -9,44 +9,13 @@ interface TemplateSelectionProps {
 
 export const TemplateSelection: React.FC<TemplateSelectionProps> = ({ productId }) => {
   const { letterData, updateLetterData } = useLetterStore();
-  const [templates, setTemplates] = React.useState<LetterTemplate[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const { templates, fetchTemplates, isLoading } = useProductStore();
 
   React.useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        // Simulated API call
-        const response = await fetch(`/api/products/${productId}/templates`);
-        const data = await response.json();
-        setTemplates(data);
-      } catch (error) {
-        console.error('Error fetching templates:', error);
-        // Fallback to default templates for demo
-        setTemplates([
-          {
-            id: '1',
-            name: 'Letter of Medical Necessity',
-            productId,
-            isDefault: true,
-            type: 'medical_necessity',
-            content: '...',
-          },
-          {
-            id: '2',
-            name: 'Letter of Appeal',
-            productId,
-            isDefault: true,
-            type: 'appeal',
-            content: '...',
-          },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchTemplates(productId);
+  }, [productId, fetchTemplates]);
 
-    fetchTemplates();
-  }, [productId]);
+  const productTemplates = templates[productId] || [];
 
   const handleTemplateSelect = (templateId: string) => {
     updateLetterData({ templateId });
@@ -56,7 +25,7 @@ export const TemplateSelection: React.FC<TemplateSelectionProps> = ({ productId 
     updateLetterData({ letterDate: e.target.value });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -74,7 +43,7 @@ export const TemplateSelection: React.FC<TemplateSelectionProps> = ({ productId 
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {templates.map((template) => (
+        {productTemplates.map((template) => (
           <div
             key={template.id}
             className={`relative rounded-lg border p-4 cursor-pointer transition-colors ${

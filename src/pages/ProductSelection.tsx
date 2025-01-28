@@ -1,22 +1,23 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, ChevronRight } from 'lucide-react';
-
-const mockProducts = [
-  {
-    id: '1',
-    name: 'Product A',
-    description: 'Description for Product A',
-  },
-  {
-    id: '2',
-    name: 'Product B',
-    description: 'Description for Product B',
-  },
-];
+import { useProductStore } from '../store/productStore';
 
 export const ProductSelection: React.FC = () => {
   const navigate = useNavigate();
+  const { products, fetchProducts, isLoading } = useProductStore();
+
+  React.useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -32,7 +33,7 @@ export const ProductSelection: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {mockProducts.map((product) => (
+          {products.map((product) => (
             <button
               key={product.id}
               onClick={() => navigate(`/letter/${product.id}`)}
