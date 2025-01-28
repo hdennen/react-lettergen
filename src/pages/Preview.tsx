@@ -97,7 +97,7 @@ export const Preview: React.FC = () => {
               <p>Dear {letterData.insurance?.company?.contactName || 'Sir/Madam'},</p>
 
               {/* Introduction */}
-              <p>
+              <p className="whitespace-pre-line">
                 {letterData.template?.intro}
               </p>
 
@@ -144,7 +144,7 @@ export const Preview: React.FC = () => {
               {/* Medical Necessity */}
               <div>
                 <h2 className="text-lg font-semibold mb-2">Medical Necessity</h2>
-                <p>{letterData.finalRationale}</p>
+                <p className="whitespace-pre-line">{letterData.finalRationale}</p>
               </div>
 
               {/* Closing */}
