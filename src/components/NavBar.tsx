@@ -25,9 +25,6 @@ export const NavBar = () => {
             <Link to="/" className="px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100">
               Home
             </Link>
-            <Link to="/products" className="px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100">
-              Products
-            </Link>
             
             {isAuthenticated ? (
               <div className="relative group">
