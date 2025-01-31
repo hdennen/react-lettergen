@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import logo from '../assets/img/acehoundlogo2.png';
 
 export const NavBar = () => {
   const { isAuthenticated, logout } = useAuth();
@@ -13,8 +14,8 @@ export const NavBar = () => {
             <Link to="/">
               <img
                 className="h-[100px] w-[300px] object-contain"
-                src="../../public/img/acehoundlogo2.png" // Replace with your actual logo path
-                alt="Company Logo"
+                src={logo}
+                alt="ACEHOUND - Access Correspondence Expert"
               />
             </Link>
           </div>
