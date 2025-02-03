@@ -1,3 +1,8 @@
 # react-lettergen
 
-[Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/hdennen/react-lettergen)
+## IDE
+- install tailwindcss extension
+
+## Run
+- npm install
+- npm run dev
