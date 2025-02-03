@@ -5,6 +5,8 @@ import type { LabResult } from '../../types';
 
 export const DiagnosisInformation: React.FC = () => {
   const { letterData, updateLetterData } = useLetterStore();
+  const inputClassName = "block w-full rounded-lg border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5";
+  const labelClassName = "block text-sm font-medium text-gray-700 mb-1";
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -73,34 +75,38 @@ export const DiagnosisInformation: React.FC = () => {
           <h3 className="text-sm font-medium text-gray-900 mb-4">Primary Diagnosis</h3>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label htmlFor="icd10Code" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="icd10Code" className={labelClassName}>
                 ICD-10 Code
               </label>
-              <input
-                type="text"
-                id="icd10Code"
-                name="icd10Code"
-                value={letterData.diagnosis?.icd10Code || ''}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                required
-                placeholder="e.g., J45.50"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  id="icd10Code"
+                  name="icd10Code"
+                  value={letterData.diagnosis?.icd10Code || ''}
+                  onChange={handleInputChange}
+                  className={inputClassName}
+                  required
+                  placeholder="e.g., J45.50"
+                />
+              </div>
             </div>
             <div className="sm:col-span-2">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="description" className={labelClassName}>
                 Diagnosis Description
               </label>
-              <input
-                type="text"
-                id="description"
-                name="description"
-                value={letterData.diagnosis?.description || ''}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                required
-                placeholder="e.g., Severe persistent asthma"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  id="description"
+                  name="description"
+                  value={letterData.diagnosis?.description || ''}
+                  onChange={handleInputChange}
+                  className={inputClassName}
+                  required
+                  placeholder="e.g., Severe persistent asthma"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -134,47 +140,55 @@ export const DiagnosisInformation: React.FC = () => {
                 </button>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Date</label>
-                    <input
-                      type="date"
-                      value={labResult.date}
-                      onChange={(e) => handleLabResultChange(index, 'date', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    />
+                    <label className={labelClassName}>Date</label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        value={labResult.date}
+                        onChange={(e) => handleLabResultChange(index, 'date', e.target.value)}
+                        className={inputClassName}
+                        required
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Test Name</label>
-                    <input
-                      type="text"
-                      value={labResult.test}
-                      onChange={(e) => handleLabResultChange(index, 'test', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                      placeholder="e.g., Blood Glucose"
-                    />
+                    <label className={labelClassName}>Test Name</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={labResult.test}
+                        onChange={(e) => handleLabResultChange(index, 'test', e.target.value)}
+                        className={inputClassName}
+                        required
+                        placeholder="e.g., Blood Glucose"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Result</label>
-                    <input
-                      type="text"
-                      value={labResult.result}
-                      onChange={(e) => handleLabResultChange(index, 'result', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                      placeholder="e.g., 120"
-                    />
+                    <label className={labelClassName}>Result</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={labResult.result}
+                        onChange={(e) => handleLabResultChange(index, 'result', e.target.value)}
+                        className={inputClassName}
+                        required
+                        placeholder="e.g., 120"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Unit</label>
-                    <input
-                      type="text"
-                      value={labResult.unit}
-                      onChange={(e) => handleLabResultChange(index, 'unit', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                      placeholder="e.g., mg/dL"
-                    />
+                    <label className={labelClassName}>Unit</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={labResult.unit}
+                        onChange={(e) => handleLabResultChange(index, 'unit', e.target.value)}
+                        className={inputClassName}
+                        required
+                        placeholder="e.g., mg/dL"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -190,18 +204,20 @@ export const DiagnosisInformation: React.FC = () => {
 
         {/* Additional Details */}
         <div>
-          <label htmlFor="additionalDetails" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="additionalDetails" className={labelClassName}>
             Additional Details
           </label>
-          <textarea
-            id="additionalDetails"
-            name="additionalDetails"
-            rows={4}
-            value={letterData.diagnosis?.additionalDetails || ''}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            placeholder="Enter any additional relevant diagnosis information..."
-          />
+          <div className="relative">
+            <textarea
+              id="additionalDetails"
+              name="additionalDetails"
+              rows={4}
+              value={letterData.diagnosis?.additionalDetails || ''}
+              onChange={handleInputChange}
+              className={inputClassName}
+              placeholder="Enter any additional relevant diagnosis information..."
+            />
+          </div>
         </div>
 
         <div className="mt-6 bg-gray-50 -mx-6 -mb-6 px-6 py-4">

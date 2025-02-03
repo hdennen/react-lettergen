@@ -25,48 +25,56 @@ export const PatientDetails: React.FC = () => {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
               First Name
             </label>
-            <input
-              type="text"
-              id="firstName"
-              name="firstName"
-              value={letterData.patient?.firstName || ''}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              required
-            />
+            <div className="relative">
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={letterData.patient?.firstName || ''}
+                onChange={handleInputChange}
+                className="block w-full rounded-lg border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5"
+                placeholder="Enter first name"
+                required
+              />
+            </div>
           </div>
 
           <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
               Last Name
             </label>
-            <input
-              type="text"
-              id="lastName"
-              name="lastName"
-              value={letterData.patient?.lastName || ''}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              required
-            />
+            <div className="relative">
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={letterData.patient?.lastName || ''}
+                onChange={handleInputChange}
+                className="block w-full rounded-lg border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5"
+                placeholder="Enter last name"
+                required
+              />
+            </div>
           </div>
 
           <div>
-            <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
               Date of Birth
             </label>
-            <input
-              type="date"
-              id="dateOfBirth"
-              name="dateOfBirth"
-              value={letterData.patient?.dateOfBirth || ''}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              required
-            />
+            <div className="relative">
+              <input
+                type="date"
+                id="dateOfBirth"
+                name="dateOfBirth"
+                value={letterData.patient?.dateOfBirth || ''}
+                onChange={handleInputChange}
+                className="block w-full rounded-lg border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5"
+                required
+              />
+            </div>
           </div>
         </div>
 

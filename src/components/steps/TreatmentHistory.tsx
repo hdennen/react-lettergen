@@ -5,6 +5,8 @@ import type { Treatment } from '../../types';
 
 export const TreatmentHistory: React.FC = () => {
   const { letterData, updateLetterData } = useLetterStore();
+  const inputClassName = "block w-full rounded-lg border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5";
+  const labelClassName = "block text-sm font-medium text-gray-700 mb-1";
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -69,19 +71,21 @@ export const TreatmentHistory: React.FC = () => {
       <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-8">
         {/* Condition Description */}
         <div>
-          <label htmlFor="conditionDescription" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="conditionDescription" className={labelClassName}>
             Condition Description
           </label>
-          <textarea
-            id="conditionDescription"
-            name="conditionDescription"
-            rows={3}
-            value={letterData.treatmentHistory?.conditionDescription || ''}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            placeholder="Describe the patient's condition and its progression..."
-            required
-          />
+          <div className="relative">
+            <textarea
+              id="conditionDescription"
+              name="conditionDescription"
+              rows={3}
+              value={letterData.treatmentHistory?.conditionDescription || ''}
+              onChange={handleInputChange}
+              className={inputClassName}
+              placeholder="Describe the patient's condition and its progression..."
+              required
+            />
+          </div>
         </div>
 
         {/* Previous Treatments */}
@@ -113,36 +117,42 @@ export const TreatmentHistory: React.FC = () => {
                 </button>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Date</label>
-                    <input
-                      type="date"
-                      value={treatment.date}
-                      onChange={(e) => handleTreatmentChange(index, 'date', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      required
-                    />
+                    <label className={labelClassName}>Date</label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        value={treatment.date}
+                        onChange={(e) => handleTreatmentChange(index, 'date', e.target.value)}
+                        className={inputClassName}
+                        required
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Treatment</label>
-                    <input
-                      type="text"
-                      value={treatment.treatment}
-                      onChange={(e) => handleTreatmentChange(index, 'treatment', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      placeholder="e.g., Physical Therapy"
-                      required
-                    />
+                    <label className={labelClassName}>Treatment</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={treatment.treatment}
+                        onChange={(e) => handleTreatmentChange(index, 'treatment', e.target.value)}
+                        className={inputClassName}
+                        placeholder="e.g., Physical Therapy"
+                        required
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Outcome</label>
-                    <input
-                      type="text"
-                      value={treatment.outcome}
-                      onChange={(e) => handleTreatmentChange(index, 'outcome', e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      placeholder="e.g., Limited improvement"
-                      required
-                    />
+                    <label className={labelClassName}>Outcome</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={treatment.outcome}
+                        onChange={(e) => handleTreatmentChange(index, 'outcome', e.target.value)}
+                        className={inputClassName}
+                        placeholder="e.g., Limited improvement"
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -158,19 +168,21 @@ export const TreatmentHistory: React.FC = () => {
 
         {/* Treatment Rationale */}
         <div>
-          <label htmlFor="rationale" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="rationale" className={labelClassName}>
             Treatment Rationale
           </label>
-          <textarea
-            id="rationale"
-            name="rationale"
-            rows={4}
-            value={letterData.treatmentHistory?.rationale || ''}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            placeholder="Explain why previous treatments were insufficient and why the requested treatment is necessary..."
-            required
-          />
+          <div className="relative">
+            <textarea
+              id="rationale"
+              name="rationale"
+              rows={4}
+              value={letterData.treatmentHistory?.rationale || ''}
+              onChange={handleInputChange}
+              className={inputClassName}
+              placeholder="Explain why previous treatments were insufficient and why the requested treatment is necessary..."
+              required
+            />
+          </div>
         </div>
 
         <div className="mt-6 bg-gray-50 -mx-6 -mb-6 px-6 py-4">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLetterStore } from '../../store/letterStore';
-import { Search, Building2 } from 'lucide-react';
+import { Building2, User } from 'lucide-react';
 import type { Provider, Practice } from '../../types';
 
 export const ProviderInformation: React.FC = () => {
@@ -99,7 +99,7 @@ export const ProviderInformation: React.FC = () => {
 
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+          <User className="h-5 w-5 text-gray-400" />
         </div>
         <select
           value={selectedProvider?.id || ''}
@@ -107,14 +107,34 @@ export const ProviderInformation: React.FC = () => {
             const provider = providers.find(p => p.id === e.target.value);
             if (provider) handleProviderSelect(provider);
           }}
-          className="block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+          className="block w-full pl-10 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer pr-10"
         >
+          <option value="" disabled>Select a provider</option>
           {providers.map((provider) => (
-            <option key={provider.id} value={provider.id}>
+            <option 
+              key={provider.id} 
+              value={provider.id}
+              className="py-2"
+            >
               {provider.title} {provider.firstName} {provider.lastName} - NPI: {provider.npi}
             </option>
           ))}
         </select>
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <svg 
+            className="h-5 w-5 text-gray-400" 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 20 20" 
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path 
+              fillRule="evenodd" 
+              d="M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z" 
+              clipRule="evenodd" 
+            />
+          </svg>
+        </div>
       </div>
 
       {selectedProvider && (
