@@ -44,16 +44,19 @@ export const NavBar = () => {
                     />
                   </svg>
                 </button>
-                <div className="absolute right-0 w-48 mt-2 py-2 bg-white rounded-md shadow-xl hidden group-hover:block">
-                  <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Profile
-                  </Link>
-                  <button
-                    onClick={logout}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Sign out
-                  </button>
+                <div className="absolute right-0 w-48 mt-2 bg-white rounded-md shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-in-out transform">
+                  <div className="h-2 -mt-2"></div>
+                  <div className="py-2">
+                    <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                      Profile
+                    </Link>
+                    <button
+                      onClick={logout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Sign out
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
