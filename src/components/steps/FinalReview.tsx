@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 export const FinalReview: React.FC = () => {
   const { letterData, updateLetterData } = useLetterStore();
   const navigate = useNavigate();
+  const inputClassName = "block w-full rounded-lg border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5";
+  const labelClassName = "block text-sm font-medium text-gray-700 mb-1";
 
   const handleFinalRationaleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     updateLetterData({ finalRationale: e.target.value });
@@ -161,7 +163,7 @@ export const FinalReview: React.FC = () => {
         {/* Introduction */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
-            <label htmlFor="introduction" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="introduction" className={labelClassName}>
               Letter Introduction
             </label>
             {letterData.template?.intro && (
@@ -173,20 +175,23 @@ export const FinalReview: React.FC = () => {
               </button>
             )}
           </div>
-          <textarea
-            id="introduction"
-            rows={6}
-            value={letterData.introduction || ''}
-            onChange={(e) => updateLetterData({ introduction: e.target.value })}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            required
-          />
+          <div className="relative">
+            <textarea
+              id="introduction"
+              rows={6}
+              value={letterData.introduction || ''}
+              onChange={(e) => updateLetterData({ introduction: e.target.value })}
+              className={inputClassName}
+              placeholder="Write your letter introduction here..."
+              required
+            />
+          </div>
         </div>
 
         {/* Final Rationale */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
-            <label htmlFor="finalRationale" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="finalRationale" className={labelClassName}>
               Final Rationale for Medical Necessity
             </label>
             {letterData.template?.rationale && (
@@ -198,14 +203,17 @@ export const FinalReview: React.FC = () => {
               </button>
             )}
           </div>
-          <textarea
-            id="finalRationale"
-            rows={6}
-            value={letterData.finalRationale || ''}
-            onChange={handleFinalRationaleChange}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            required
-          />
+          <div className="relative">
+            <textarea
+              id="finalRationale"
+              rows={6}
+              value={letterData.finalRationale || ''}
+              onChange={handleFinalRationaleChange}
+              className={inputClassName}
+              placeholder="Explain the medical necessity for the requested treatment..."
+              required
+            />
+          </div>
         </div>
 
         <div className="flex justify-end space-x-4">
