@@ -6,8 +6,6 @@ import { useNavigate } from 'react-router-dom';
 export const FinalReview: React.FC = () => {
   const { letterData, updateLetterData } = useLetterStore();
   const navigate = useNavigate();
-  const inputClassName = "block w-full rounded-lg border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5";
-  const labelClassName = "block text-sm font-medium text-gray-700 mb-1";
 
   const handleFinalRationaleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     updateLetterData({ finalRationale: e.target.value });
@@ -29,14 +27,14 @@ export const FinalReview: React.FC = () => {
     editStep: number
   ) => (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+      <div className="section-header">
         <div className="flex items-center gap-2">
           {icon}
           <h3 className="text-sm font-medium text-gray-900">{title}</h3>
         </div>
         <button
           onClick={() => letterData.setStep(editStep)}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="btn-secondary"
         >
           Edit
         </button>
@@ -161,15 +159,15 @@ export const FinalReview: React.FC = () => {
         )}
 
         {/* Introduction */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="form-section">
           <div className="flex justify-between items-center mb-4">
-            <label htmlFor="introduction" className={labelClassName}>
+            <label htmlFor="introduction" className="form-label">
               Letter Introduction
             </label>
             {letterData.template?.intro && (
               <button
                 onClick={() => updateLetterData({ introduction: letterData.template?.intro })}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="btn-secondary"
               >
                 Use Template Introduction
               </button>
@@ -181,7 +179,7 @@ export const FinalReview: React.FC = () => {
               rows={6}
               value={letterData.introduction || ''}
               onChange={(e) => updateLetterData({ introduction: e.target.value })}
-              className={inputClassName}
+              className="form-textarea"
               placeholder="Write your letter introduction here..."
               required
             />
@@ -189,15 +187,15 @@ export const FinalReview: React.FC = () => {
         </div>
 
         {/* Final Rationale */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="form-section">
           <div className="flex justify-between items-center mb-4">
-            <label htmlFor="finalRationale" className={labelClassName}>
+            <label htmlFor="finalRationale" className="form-label">
               Final Rationale for Medical Necessity
             </label>
             {letterData.template?.rationale && (
               <button
                 onClick={() => updateLetterData({ finalRationale: letterData.template?.rationale })}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="btn-secondary"
               >
                 Use Template Rationale
               </button>
@@ -209,7 +207,7 @@ export const FinalReview: React.FC = () => {
               rows={6}
               value={letterData.finalRationale || ''}
               onChange={handleFinalRationaleChange}
-              className={inputClassName}
+              className="form-textarea"
               placeholder="Explain the medical necessity for the requested treatment..."
               required
             />
@@ -219,7 +217,7 @@ export const FinalReview: React.FC = () => {
         <div className="flex justify-end space-x-4">
           <button
             onClick={() => navigate('/preview')}
-            className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="btn-primary"
           >
             Generate Letter
           </button>
