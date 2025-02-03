@@ -4,7 +4,7 @@ import { FileCheck, User, Building2, Stethoscope, History, FileText } from 'luci
 import { useNavigate } from 'react-router-dom';
 
 export const FinalReview: React.FC = () => {
-  const { letterData, updateLetterData } = useLetterStore();
+  const { letterData, updateLetterData, setStep } = useLetterStore();
   const navigate = useNavigate();
 
   const handleFinalRationaleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -33,7 +33,7 @@ export const FinalReview: React.FC = () => {
           <h3 className="text-sm font-medium text-gray-900">{title}</h3>
         </div>
         <button
-          onClick={() => letterData.setStep(editStep)}
+          onClick={() => setStep(editStep)}
           className="btn-secondary"
         >
           Edit
