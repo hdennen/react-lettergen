@@ -2,9 +2,10 @@ import React from 'react';
 import { useLetterStore } from '../../store/letterStore';
 import { Building2, User } from 'lucide-react';
 import type { Provider, Practice } from '../../types';
+import { apiService } from '../../services/api';
 
 export const ProviderInformation: React.FC = () => {
-  const { letterData, updateLetterData } = useLetterStore();
+  const { updateLetterData } = useLetterStore();
   const [providers, setProviders] = React.useState<Provider[]>([]);
   const [selectedProvider, setSelectedProvider] = React.useState<Provider | null>(null);
   const [practice, setPractice] = React.useState<Practice | null>(null);
@@ -13,51 +14,22 @@ export const ProviderInformation: React.FC = () => {
   React.useEffect(() => {
     const fetchProviderData = async () => {
       try {
-        // Simulated API call for providers
-        const response = await fetch('/api/providers');
-        const data = await response.json();
+        const data = await apiService.getProviders();
         setProviders(data);
         
         // Set default provider (current user)
-        const defaultProvider = data[0]; // Assuming first provider is the current user
+        const defaultProvider = data[0];
         setSelectedProvider(defaultProvider);
         updateLetterData({ provider: defaultProvider });
         
         // Fetch associated practice
         if (defaultProvider) {
-          const practiceResponse = await fetch(`/api/practices/${defaultProvider.practiceId}`);
-          const practiceData = await practiceResponse.json();
+          const practiceData = await apiService.getPractice(defaultProvider.practiceId);
           setPractice(practiceData);
           updateLetterData({ practice: practiceData });
         }
       } catch (error) {
         console.error('Error fetching provider data:', error);
-        // Fallback data for demo
-        const mockProvider = {
-          id: '1',
-          firstName: 'John',
-          lastName: 'Doe',
-          title: 'MD',
-          npi: '1234567890',
-          practiceId: '1'
-        };
-        const mockPractice = {
-          id: '1',
-          name: 'Medical Center',
-          address: '123 Healthcare Ave',
-          city: 'Medical City',
-          state: 'MC',
-          zip: '12345',
-          phone: '(555) 123-4567',
-          logo: 'https://example.com/logo.png'
-        };
-        setProviders([mockProvider]);
-        setSelectedProvider(mockProvider);
-        setPractice(mockPractice);
-        updateLetterData({ 
-          provider: mockProvider,
-          practice: mockPractice
-        });
       } finally {
         setLoading(false);
       }
@@ -71,8 +43,7 @@ export const ProviderInformation: React.FC = () => {
     updateLetterData({ provider });
 
     try {
-      const response = await fetch(`/api/practices/${provider.practiceId}`);
-      const practiceData = await response.json();
+      const practiceData = await apiService.getPractice(provider.practiceId);
       setPractice(practiceData);
       updateLetterData({ practice: practiceData });
     } catch (error) {
