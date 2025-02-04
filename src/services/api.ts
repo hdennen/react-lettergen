@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import type { Product, LetterTemplate, Provider, Practice } from '../types';
 import { config } from '../config';
+import { mockData } from '../mocks/mockData';
 
 class ApiService {
   private baseUrl = config.apiBaseUrl;
@@ -19,20 +20,7 @@ class ApiService {
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for products');
-        return Promise.resolve([
-          {
-            id: '1',
-            name: 'Product A',
-            description: 'Description for Product A',
-            templates: [],
-          },
-          {
-            id: '2',
-            name: 'Product B',
-            description: 'Description for Product B',
-            templates: [],
-          },
-        ]);
+        return Promise.resolve(mockData.products);
       }
       this.handleError(error as AxiosError);
     }
@@ -43,32 +31,14 @@ class ApiService {
       const response = await this.api.get<any[]>(`/templates/byProduct/${productId}`);
       return response.data.map(this.transformResponse);
     } catch (error) {
+      if (config.useMockData) {
+        console.info('Using mock data for templates');
+        return Promise.resolve(Object.values(mockData.templates).map(template => ({
+          ...template,
+          productId,
+        })));
+      }
       this.handleError(error as AxiosError);
-      // Return mock data for demo
-      return [
-        {
-          id: '1',
-          name: 'Letter of Medical Necessity',
-          productId,
-          isDefault: true,
-          type: 'medical_necessity',
-          intro: '...',
-          rationale: '...',
-          version: '...',
-          content: '...',
-        },
-        {
-          id: '2',
-          name: 'Letter of Appeal',
-          productId,
-          isDefault: true,
-          type: 'appeal',
-          intro: '...',
-          rationale: '...',
-          version: '...',
-          content: '...',
-        },
-      ];
     }
   }
 
@@ -78,14 +48,8 @@ class ApiService {
       return response.data;
     } catch (error) {
       if (config.useMockData) {
-        return Promise.resolve([{
-          id: '1',
-          firstName: 'John',
-          lastName: 'Doe',
-          title: 'MD',
-          npi: '1234567890',
-          practiceId: '1'
-        }]);
+        console.info('Using mock data for providers');
+        return Promise.resolve(mockData.providers);
       }
       this.handleError(error as AxiosError);
     }
@@ -97,16 +61,12 @@ class ApiService {
       return response.data;
     } catch (error) {
       if (config.useMockData) {
-        return Promise.resolve({
-          id: practiceId,
-          name: 'Medical Center',
-          address: '123 Healthcare Ave',
-          city: 'Medical City',
-          state: 'MC',
-          zip: '12345',
-          phone: '(555) 123-4567',
-          logo: 'https://example.com/logo.png'
-        });
+        console.info('Using mock data for practice');
+        const practice = mockData.practices[practiceId];
+        if (!practice) {
+          throw new Error(`No mock practice found for ID: ${practiceId}`);
+        }
+        return Promise.resolve(practice);
       }
       this.handleError(error as AxiosError);
     }
