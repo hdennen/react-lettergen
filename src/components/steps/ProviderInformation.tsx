@@ -1,89 +1,61 @@
 import React from 'react';
 import { useLetterStore } from '../../store/letterStore';
 import { Building2, User } from 'lucide-react';
-import type { Provider, Practice } from '../../types';
+import type { UserProfile, Practice } from '../../types';
+import { useUserStore } from '../../store/userStore';
 
 export const ProviderInformation: React.FC = () => {
-  const { letterData, updateLetterData } = useLetterStore();
-  const [providers, setProviders] = React.useState<Provider[]>([]);
-  const [selectedProvider, setSelectedProvider] = React.useState<Provider | null>(null);
-  const [practice, setPractice] = React.useState<Practice | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const { updateLetterData } = useLetterStore();
+  const { 
+    practice, 
+    practiceProviders, 
+    currentUser, 
+    fetchUserAndPractice,
+    isLoading 
+  } = useUserStore();
+  const [selectedProvider, setSelectedProvider] = React.useState<UserProfile | null>(null);
 
   React.useEffect(() => {
-    const fetchProviderData = async () => {
+    const loadData = async () => {
       try {
-        // Simulated API call for providers
-        const response = await fetch('/api/providers');
-        const data = await response.json();
-        setProviders(data);
-        
-        // Set default provider (current user)
-        const defaultProvider = data[0]; // Assuming first provider is the current user
-        setSelectedProvider(defaultProvider);
-        updateLetterData({ provider: defaultProvider });
-        
-        // Fetch associated practice
-        if (defaultProvider) {
-          const practiceResponse = await fetch(`/api/practices/${defaultProvider.practiceId}`);
-          const practiceData = await practiceResponse.json();
-          setPractice(practiceData);
-          updateLetterData({ practice: practiceData });
-        }
+        await fetchUserAndPractice();
       } catch (error) {
         console.error('Error fetching provider data:', error);
-        // Fallback data for demo
-        const mockProvider = {
-          id: '1',
-          firstName: 'John',
-          lastName: 'Doe',
-          title: 'MD',
-          npi: '1234567890',
-          practiceId: '1'
-        };
-        const mockPractice = {
-          id: '1',
-          name: 'Medical Center',
-          address: '123 Healthcare Ave',
-          city: 'Medical City',
-          state: 'MC',
-          zip: '12345',
-          phone: '(555) 123-4567',
-          logo: 'https://example.com/logo.png'
-        };
-        setProviders([mockProvider]);
-        setSelectedProvider(mockProvider);
-        setPractice(mockPractice);
-        updateLetterData({ 
-          provider: mockProvider,
-          practice: mockPractice
-        });
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchProviderData();
-  }, [updateLetterData]);
-
-  const handleProviderSelect = async (provider: Provider) => {
-    setSelectedProvider(provider);
-    updateLetterData({ provider });
-
-    try {
-      const response = await fetch(`/api/practices/${provider.practiceId}`);
-      const practiceData = await response.json();
-      setPractice(practiceData);
-      updateLetterData({ practice: practiceData });
-    } catch (error) {
-      console.error('Error fetching practice data:', error);
+    if (!practice || !practiceProviders.length) {
+      loadData();
+    } else if (currentUser && !selectedProvider) {
+      // Set current user as default provider
+      setSelectedProvider(currentUser);
+      updateLetterData({ 
+        provider: currentUser,
+        practice 
+      });
     }
+  }, [currentUser, practice, practiceProviders, fetchUserAndPractice, selectedProvider, updateLetterData]);
+
+  const handleProviderSelect = (provider: UserProfile) => {
+    setSelectedProvider(provider);
+    updateLetterData({ 
+      provider,
+      practice 
+    });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  if (!practice || !currentUser) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">No practice information available</p>
       </div>
     );
   }
@@ -93,7 +65,7 @@ export const ProviderInformation: React.FC = () => {
       <div>
         <h2 className="text-lg font-medium text-gray-900 mb-1">Provider Information</h2>
         <p className="text-sm text-gray-500">
-          Select your provider information or search for another provider
+          Select your provider information or another provider from your practice
         </p>
       </div>
 
@@ -104,19 +76,19 @@ export const ProviderInformation: React.FC = () => {
         <select
           value={selectedProvider?.id || ''}
           onChange={(e) => {
-            const provider = providers.find(p => p.id === e.target.value);
+            const provider = practiceProviders.find(p => p.id === e.target.value);
             if (provider) handleProviderSelect(provider);
           }}
           className="block w-full pl-10 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer pr-10"
         >
           <option value="" disabled>Select a provider</option>
-          {providers.map((provider) => (
+          {practiceProviders.map((provider) => (
             <option 
               key={provider.id} 
               value={provider.id}
               className="py-2"
             >
-              {provider.title} {provider.firstName} {provider.lastName} - NPI: {provider.npi}
+              {provider.title} {provider.firstName} {provider.lastName} - NPI: {provider.npiNumber}
             </option>
           ))}
         </select>
@@ -151,36 +123,34 @@ export const ProviderInformation: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">NPI</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedProvider.npi}</p>
+                  <p className="mt-1 text-sm text-gray-900">{selectedProvider.npiNumber}</p>
                 </div>
               </div>
             </div>
 
-            {practice && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Practice Information
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Practice Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{practice.name}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Address</label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {practice.address}<br />
-                      {practice.city}, {practice.state} {practice.zip}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <p className="mt-1 text-sm text-gray-900">{practice.phone}</p>
-                  </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Practice Information
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Practice Name</label>
+                  <p className="mt-1 text-sm text-gray-900">{practice.name}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Address</label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {practice.address}<br />
+                    {practice.city}, {practice.state} {practice.zip}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Phone</label>
+                  <p className="mt-1 text-sm text-gray-900">{practice.phone}</p>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}

@@ -1,19 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useUserStore } from '../store/userStore';
 
 export const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { signup } = useAuth();
+  const { setCurrentUser } = useUserStore();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signup(email, password);
-      navigate('/');
+      const user = await signup(email, password);
+      setCurrentUser({
+        id: user.id,
+        email: user.email || email,
+        firstName: '',
+        lastName: '',
+        title: '',
+        npiNumber: '',
+        practiceId: '',
+      });
+      navigate('/profile/setup');
     } catch (err) {
       setError('Failed to create an account');
     }
