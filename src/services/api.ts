@@ -172,6 +172,23 @@ class ApiService {
     }
   }
 
+  async createOrUpdatePractice(practiceData: Omit<Practice, 'id'>): Promise<Practice> {
+    try {
+      const response = await this.api.post<Practice>('/practices', practiceData);
+      return response.data;
+    } catch (error) {
+      if (config.useMockData) {
+        console.info('Using mock data for practice creation');
+        return Promise.resolve({
+          id: 'practice_' + Date.now(),
+          ...practiceData,
+          logo: '' // Add any required fields that weren't in the input
+        });
+      }
+      this.handleError(error as AxiosError);
+    }
+  }
+
   private handleError(error: AxiosError): never {
     if (error.response) {
       console.error('API Error Response:', {

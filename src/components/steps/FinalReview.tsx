@@ -61,7 +61,7 @@ export const FinalReview: React.FC = () => {
               {letterData.provider?.title} {letterData.provider?.firstName} {letterData.provider?.lastName}
             </p>
             <p className="text-sm text-gray-900">
-              <span className="font-medium">NPI:</span> {letterData.provider?.npi}
+              <span className="font-medium">NPI:</span> {letterData.provider?.npiNumber}
             </p>
             <p className="text-sm text-gray-900">
               <span className="font-medium">Practice:</span> {letterData.practice?.name}

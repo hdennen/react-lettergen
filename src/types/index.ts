@@ -22,7 +22,7 @@ export interface Provider {
   firstName: string;
   lastName: string;
   title: string;
-  npi: string;
+  npiNumber: string;
   practiceId: string;
 }
 

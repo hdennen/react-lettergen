@@ -43,7 +43,12 @@ export const ProfileSetup = () => {
     zip: '',
   });
 
-  const { updateUserProfile, updatePracticeInfo } = useUserStore();
+  const { 
+    currentUser, 
+    updateUserProfile, 
+    updatePracticeInfo, 
+    setPracticeProviders 
+  } = useUserStore();
 
   const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -92,14 +97,18 @@ export const ProfileSetup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await updateUserProfile({
+      // First update the user profile
+      const updatedUser = {
+        ...currentUser,
         firstName: personalInfo.firstName,
         lastName: personalInfo.lastName,
         title: personalInfo.title,
         npiNumber: personalInfo.npiNumber,
-      });
-      
-      await updatePracticeInfo({
+      };
+      await updateUserProfile(updatedUser);
+
+      // Then create/update practice and associate user
+      const practiceResponse = await apiService.createOrUpdatePractice({
         name: practiceInfo.name,
         npiNumber: practiceInfo.npiNumber,
         address: practiceInfo.address,
@@ -107,7 +116,18 @@ export const ProfileSetup = () => {
         city: practiceInfo.city,
         state: practiceInfo.state,
         zip: practiceInfo.zip,
+        providers: [updatedUser] // Include the current user as a provider
       });
+
+      // Update practice in store and associate user with practice
+      await updatePracticeInfo(practiceResponse);
+      await updateUserProfile({
+        ...updatedUser,
+        practiceId: practiceResponse.id
+      });
+
+      // Update practice providers list
+      setPracticeProviders([updatedUser]);
       
       navigate('/');
     } catch (error) {
