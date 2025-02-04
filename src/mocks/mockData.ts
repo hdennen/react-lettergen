@@ -60,4 +60,18 @@ export const mockData = {
       logo: 'https://example.com/logo.png',
     },
   },
+
+  currentUser: {
+    id: '1',
+    email: 'doctor@example.com',
+    firstName: 'John',
+    lastName: 'Doe',
+    title: 'MD',
+    npiNumber: '1234567890',
+    practiceId: '1'
+  },
+
+  practiceProviders: [
+    // ... array of mock providers
+  ]
 }; 

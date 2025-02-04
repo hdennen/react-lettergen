@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { config } from '../config';
+import { User } from '../types';
+import { apiService } from '../services/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string) => Promise<User>;
   logout: () => void;
 }
 
@@ -19,9 +22,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('isAuthenticated', 'true');
   };
 
-  const signup = async (email: string, password: string) => {
+  const signup = async (email: string, password: string): Promise<User> => {
     // TODO: Implement actual signup
     await login(email, password);
+    if (config.useMockData) {
+      console.info('Using mock data for signup');
+      return Promise.resolve({
+        id: '123',
+        email: email,
+        firstName: '',
+        lastName: '',
+        title: ''
+      });
+    }
+
+    try {
+      const user = await apiService.signup(email, password);
+      return user;
+    } catch (error) {
+      console.error('Failed to signup:', error);
+      throw error;
+    }
+    
   };
 
   const logout = () => {

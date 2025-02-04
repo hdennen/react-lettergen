@@ -104,3 +104,44 @@ export interface LetterData {
   introduction: string;
   finalRationale: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+}
+
+export interface NPIResponse {
+  results: {
+    organization_name: string;
+    number: string;
+    addresses: Array<{
+      address_1: string;
+      city: string;
+      state: string;
+      postal_code: string;
+      telephone_number: string;
+    }>;
+  }[];
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  title: string;
+  npiNumber: string;
+  practiceId: string;
+}
+
+export interface Practice {
+  id: string;
+  name: string;
+  npiNumber: string;
+  address: string;
+  phone: string;
+  city: string;
+  state: string;
+  zip: string;
+  providers: UserProfile[];
+}
