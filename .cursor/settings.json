@@ -1,0 +1,12 @@
+{
+  "preprompts": [
+    "For all designs, make them beautiful and production-ready, not cookie cutter.",
+    "Use Tailwind CSS classes for styling.",
+    "Use Lucide React icons by default.",
+    "For images, use Unsplash stock photos with valid URLs only.",
+    "Follow TypeScript best practices and ensure type safety.",
+    "When suggesting code changes, focus on maintainability and performance.",
+    "Use modern React patterns including hooks."
+  ]
+}
+
