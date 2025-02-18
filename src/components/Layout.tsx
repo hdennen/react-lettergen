@@ -1,6 +1,5 @@
 import React from 'react';
 import { useLetterStore } from '../store/letterStore';
-import { FileText } from 'lucide-react';
 
 const steps = [
   'Select Template',
