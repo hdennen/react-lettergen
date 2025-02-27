@@ -10,6 +10,7 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ProfileSetup } from './pages/ProfileSetup';
+import { ProfileNotification } from './components/ProfileNotification';
 import { config } from './config';
 
 function App() {
@@ -20,11 +21,13 @@ function App() {
       authorizationParams={{
         redirect_uri: window.location.origin
       }}
+      cacheLocation="localstorage"
     >
       <AuthProvider>
         <Router>
           <div className="min-h-screen">
             <NavBar />
+            <ProfileNotification />
             <Routes>
               <Route path="/" element={<ProductSelection />} />
               <Route path="/login" element={<Login />} />

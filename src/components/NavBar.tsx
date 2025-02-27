@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { User } from 'lucide-react';
 import logo from '../assets/img/acehoundlogo2.png';
 
 export const NavBar = () => {
@@ -28,6 +29,13 @@ export const NavBar = () => {
                 <span className="text-gray-700">
                   {user?.email}
                 </span>
+                <Link
+                  to="/profile/setup"
+                  className="flex items-center text-indigo-600 hover:text-indigo-800"
+                >
+                  <User className="h-5 w-5 mr-1" />
+                  <span>Profile</span>
+                </Link>
                 <button
                   onClick={() => logout()}
                   className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"

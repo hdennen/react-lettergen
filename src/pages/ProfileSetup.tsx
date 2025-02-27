@@ -127,7 +127,13 @@ export const ProfileSetup = () => {
       });
 
       // Update practice providers list
-      setPracticeProviders([updatedUser]);
+      setPracticeProviders([{
+        ...updatedUser,
+        id: updatedUser.id || '', // Ensure id is not undefined
+        email: updatedUser.email || '',
+        practiceId: practiceResponse.id,
+        npiNumber: updatedUser.npiNumber || ''
+      }]);
       
       navigate('/');
     } catch (error) {

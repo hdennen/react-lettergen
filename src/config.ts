@@ -4,6 +4,7 @@ interface Config {
   auth0: {
     domain: string;
     clientId: string;
+    audience?: string;
   };
 }
 
@@ -12,6 +13,7 @@ export const config: Config = {
   useMockData: import.meta.env.VITE_USE_MOCK_DATA === 'true',
   auth0: {
     domain: import.meta.env.VITE_AUTH0_DOMAIN || '',
-    clientId: import.meta.env.VITE_AUTH0_CLIENT_ID || ''
+    clientId: import.meta.env.VITE_AUTH0_CLIENT_ID || '',
+    audience: import.meta.env.VITE_AUTH0_AUDIENCE || ''
   }
 }; 
