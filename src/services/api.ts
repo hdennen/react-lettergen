@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import type { Product, LetterTemplate, Provider, Practice, NPIResponse, UserProfile, User } from '../types';
+import type { Product, LetterTemplate, Provider, Practice, NPIResponse, UserProfile, User } from '../types/index';
 import { config } from '../config';
 import { mockData } from '../mocks/mockData';
 
