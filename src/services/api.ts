@@ -214,6 +214,7 @@ class ApiService {
 
   async getCurrentUser(): Promise<UserProfile> {
     try {
+      console.info('Getting current user');
       const response = await this.api.get<UserProfile>('/Users/current');
       return response.data;
     } catch (error) {
