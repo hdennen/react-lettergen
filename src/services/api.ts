@@ -17,8 +17,11 @@ class ApiService {
   public setAuthToken(token: string | null) {
     if (token) {
       this.api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      console.info('Auth token added to API requests');
+      console.log('Auth token:', token);
     } else {
       delete this.api.defaults.headers.common['Authorization'];
+      console.info('Auth token removed from API requests');
     }
   }
 
@@ -211,7 +214,7 @@ class ApiService {
 
   async getCurrentUser(): Promise<UserProfile> {
     try {
-      const response = await this.api.get<UserProfile>('/user/current');
+      const response = await this.api.get<UserProfile>('/Users/current');
       return response.data;
     } catch (error) {
       if (config.useMockData) {

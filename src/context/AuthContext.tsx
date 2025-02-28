@@ -2,6 +2,7 @@ import { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { User } from '../types';
 import { apiService } from '../services/api';
+import { config } from '../config';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -30,7 +31,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const setToken = async () => {
       if (isAuthenticated) {
         try {
-          const token = await getAccessTokenSilently();
+          // Get token with the correct audience
+          const token = await getAccessTokenSilently({
+            authorizationParams: {
+              audience: config.auth0.audience,
+              scope: 'openid profile email'
+            }
+          });
+          console.log('Auth token received from Auth0');
           apiService.setAuthToken(token);
         } catch (error) {
           console.error('Error getting access token:', error);
@@ -45,13 +53,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [isAuthenticated, getAccessTokenSilently]);
 
   const login = () => {
-    loginWithRedirect();
+    loginWithRedirect({
+      authorizationParams: {
+        audience: config.auth0.audience
+      }
+    });
   };
 
   const signup = () => {
     loginWithRedirect({ 
       authorizationParams: {
-        screen_hint: 'signup'
+        screen_hint: 'signup',
+        audience: config.auth0.audience
       }
     });
   };
@@ -65,7 +78,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!isAuthenticated) return null;
     
     try {
-      return await getAccessTokenSilently();
+      return await getAccessTokenSilently({
+        authorizationParams: {
+          audience: config.auth0.audience
+        }
+      });
     } catch (error) {
       console.error('Error getting access token:', error);
       return null;
