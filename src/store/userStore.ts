@@ -1,21 +1,21 @@
 import { create } from 'zustand';
 import { apiService } from '../services/api';
-import { UserProfile, Practice } from '../types';
+import { UserProfile, Organization } from '../types';
 
 interface UserState {
   currentUser: UserProfile | null;
-  practice: Practice | null;
-  practiceProviders: UserProfile[];
+  organization: Organization | null;
+  organizationProviders: UserProfile[];
   isLoading: boolean;
   error: string | null;
   
   // Actions
   setCurrentUser: (user: UserProfile) => void;
-  setPractice: (practice: Practice) => void;
-  setPracticeProviders: (providers: UserProfile[]) => void;
+  setOrganization: (organization: Organization) => void;
+  setOrganizationProviders: (providers: UserProfile[]) => void;
   updateUserProfile: (profileData: Partial<UserProfile>) => Promise<void>;
-  updatePracticeInfo: (practiceData: Partial<Practice>) => Promise<void>;
-  fetchUserAndPractice: () => Promise<void>;
+  updateOrganizationInfo: (organizationData: Partial<Organization>) => Promise<void>;
+  fetchUserAndOrganization: () => Promise<void>;
   reset: () => void;
 }
 
@@ -29,27 +29,16 @@ export const useUserStore = create<UserState>((set, get) => ({
     npiNumber: '',
     practiceId: '',
   },
-  practice: {
-    id: '',
-    name: '',
-    npiNumber: '',
-    address: '',
-    phone: '',
-    city: '',
-    state: '',
-    zip: '',
-    providers: [],
-    logo: '',
-  },
-  practiceProviders: [],
+  organization: null,
+  organizationProviders: [],
   isLoading: false,
   error: null,
 
   setCurrentUser: (user) => set({ currentUser: user }),
   
-  setPractice: (practice) => set({ practice }),
+  setOrganization: (organization) => set({ organization }),
   
-  setPracticeProviders: (providers) => set({ practiceProviders: providers }),
+  setOrganizationProviders: (providers) => set({ organizationProviders: providers }),
   
   updateUserProfile: async (profileData) => {
     try {
@@ -68,37 +57,37 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  updatePracticeInfo: async (practiceData) => {
+  updateOrganizationInfo: async (organizationData) => {
     try {
       set({ isLoading: true, error: null });
-      const practice = get().practice;
-      if (!practice) throw new Error('No practice found');
+      const organization = get().organization;
+      if (!organization) throw new Error('No organization found');
       
-      const updatedPractice = { ...practice, ...practiceData };
-      await apiService.updatePractice(updatedPractice);
-      set({ practice: updatedPractice });
+      const updatedOrganization = { ...organization, ...organizationData };
+      await apiService.updateOrganization(updatedOrganization);
+      set({ organization: updatedOrganization });
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to update practice' });
+      set({ error: error instanceof Error ? error.message : 'Failed to update organization' });
       throw error;
     } finally {
       set({ isLoading: false });
     }
   },
 
-  fetchUserAndPractice: async () => {
+  fetchUserAndOrganization: async () => {
     try {
       set({ isLoading: true, error: null });
       const userData = await apiService.getCurrentUser();
       set({ currentUser: userData });
 
       if (userData.practiceId) {
-        const [practiceData, providers] = await Promise.all([
-          apiService.getPractice(userData.practiceId),
-          apiService.getPracticeProviders(userData.practiceId)
+        const [organizationData, providers] = await Promise.all([
+          apiService.getOrganization(userData.practiceId),
+          apiService.getOrganizationProviders(userData.practiceId)
         ]);
         set({ 
-          practice: practiceData,
-          practiceProviders: providers
+          organization: organizationData,
+          organizationProviders: providers
         });
       }
     } catch (error) {
@@ -111,8 +100,8 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   reset: () => set({
     currentUser: null,
-    practice: null,
-    practiceProviders: [],
+    organization: null,
+    organizationProviders: [],
     isLoading: false,
     error: null
   })

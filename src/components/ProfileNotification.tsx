@@ -6,7 +6,7 @@ import { AlertCircle, X } from 'lucide-react';
 
 export const ProfileNotification: React.FC = () => {
   const [dismissed, setDismissed] = useState(false);
-  const { currentUser, fetchUserAndPractice } = useUserStore();
+  const { currentUser, fetchUserAndOrganization } = useUserStore();
   const { isAuthenticated } = useAuth();
   
   // Check if profile is incomplete (missing required fields)
@@ -20,9 +20,9 @@ export const ProfileNotification: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchUserAndPractice().catch(console.error);
+      fetchUserAndOrganization().catch(console.error);
     }
-  }, [isAuthenticated, fetchUserAndPractice]);
+  }, [isAuthenticated, fetchUserAndOrganization]);
 
   if (!isAuthenticated || !isProfileIncomplete || dismissed) {
     return null;

@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import type { Product, LetterTemplate, Provider, Practice, NPIResponse, UserProfile, User } from '../types/index';
+import type { Product, LetterTemplate, Provider, Practice, NPIResponse, UserProfile, User, Organization } from '../types/index';
 import { config } from '../config';
 import { mockData } from '../mocks/mockData';
 
@@ -64,6 +64,84 @@ class ApiService {
         console.info('Using mock data for practice');
         const practice = mockData.practices[practiceId];
         return Promise.resolve(practice);
+      }
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getOrganization(organizationId: string): Promise<Organization> {
+    try {
+      const response = await this.api.get<Organization>(`/v1/organizations/${organizationId}`);
+      return response.data;
+    } catch (error) {
+      if (config.useMockData) {
+        console.info('Using mock data for organization');
+        const practice = mockData.practices[organizationId];
+        if (!practice) {
+          throw new Error(`Organization with ID ${organizationId} not found`);
+        }
+        
+        return Promise.resolve({
+          id: practice.id,
+          name: practice.name,
+          npi: practice.npiNumber,
+          logoUrl: practice.logo,
+          locations: [
+            {
+              id: `loc_${practice.id}`,
+              name: 'Main Office',
+              addressLine1: practice.address,
+              city: practice.city,
+              state: practice.state,
+              zipCode: practice.zip,
+              phone: practice.phone,
+              isPrimary: true
+            }
+          ],
+          providers: practice.providers
+        });
+      }
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getOrganizationProviders(organizationId: string): Promise<UserProfile[]> {
+    try {
+      const response = await this.api.get<UserProfile[]>(`/v1/organizations/${organizationId}/providers`);
+      return response.data;
+    } catch (error) {
+      if (config.useMockData) {
+        console.info('Using mock data for organization providers');
+        const practice = mockData.practices[organizationId];
+        return Promise.resolve(practice?.providers || []);
+      }
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async updateOrganization(organizationData: Organization): Promise<void> {
+    try {
+      await this.api.put(`/v1/organizations/${organizationData.id}`, organizationData);
+    } catch (error) {
+      if (config.useMockData) {
+        console.info('Using mock data for organization update');
+        return Promise.resolve();
+      }
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createOrganization(organizationData: Omit<Organization, 'id'>): Promise<Organization> {
+    try {
+      const response = await this.api.post<Organization>('/v1/organizations', organizationData);
+      return response.data;
+    } catch (error) {
+      if (config.useMockData) {
+        console.info('Using mock data for organization creation');
+        return Promise.resolve({
+          id: 'org_' + Date.now(),
+          ...organizationData,
+        });
       }
       this.handleError(error as AxiosError);
     }

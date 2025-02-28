@@ -45,9 +45,9 @@ export const ProfileSetup = () => {
 
   const { 
     currentUser, 
-    updateUserProfile, 
-    updatePracticeInfo, 
-    setPracticeProviders 
+    updateUserProfile,
+    setOrganization,
+    setOrganizationProviders
   } = useUserStore();
 
   const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,32 +107,41 @@ export const ProfileSetup = () => {
       };
       await updateUserProfile(updatedUser);
 
-      // Then create/update practice and associate user
-      const practiceResponse = await apiService.createOrUpdatePractice({
+      // Then create organization and associate user
+      const organizationResponse = await apiService.createOrganization({
         name: practiceInfo.name,
-        npiNumber: practiceInfo.npiNumber,
-        address: practiceInfo.address,
-        phone: practiceInfo.phone,
-        city: practiceInfo.city,
-        state: practiceInfo.state,
-        zip: practiceInfo.zip,
-        providers: [updatedUser] // Include the current user as a provider
+        npi: practiceInfo.npiNumber,
+        locations: [
+          {
+            name: 'Main Office',
+            addressLine1: practiceInfo.address,
+            phone: practiceInfo.phone,
+            city: practiceInfo.city,
+            state: practiceInfo.state,
+            zipCode: practiceInfo.zip,
+            isPrimary: true
+          }
+        ]
       });
 
-      // Update practice in store and associate user with practice
-      await updatePracticeInfo(practiceResponse);
+      // Update organization in store and associate user with it
+      setOrganization(organizationResponse);
+      
+      // Update user with organization ID
       await updateUserProfile({
         ...updatedUser,
-        practiceId: practiceResponse.id
+        practiceId: organizationResponse.id
       });
 
-      // Update practice providers list
-      setPracticeProviders([{
-        ...updatedUser,
+      // Update organization providers list
+      setOrganizationProviders([{
         id: updatedUser.id || '', // Ensure id is not undefined
         email: updatedUser.email || '',
-        practiceId: practiceResponse.id,
-        npiNumber: updatedUser.npiNumber || ''
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        title: updatedUser.title,
+        npiNumber: updatedUser.npiNumber,
+        practiceId: organizationResponse.id
       }]);
       
       navigate('/');
