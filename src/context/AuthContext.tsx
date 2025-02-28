@@ -55,7 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = () => {
     loginWithRedirect({
       authorizationParams: {
-        audience: config.auth0.audience
+        audience: config.auth0.audience,
+        scope: 'openid profile email'
       }
     });
   };
@@ -64,7 +65,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loginWithRedirect({ 
       authorizationParams: {
         screen_hint: 'signup',
-        audience: config.auth0.audience
+        audience: config.auth0.audience,
+        scope: 'openid profile email'
       }
     });
   };
