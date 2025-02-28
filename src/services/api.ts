@@ -13,6 +13,15 @@ class ApiService {
     },
   });
 
+  // Method to set the auth token for API requests
+  public setAuthToken(token: string | null) {
+    if (token) {
+      this.api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete this.api.defaults.headers.common['Authorization'];
+    }
+  }
+
   async getProducts(): Promise<Product[]> {
     try {
       const response = await this.api.get<Product[]>('/products');

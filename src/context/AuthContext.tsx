@@ -1,6 +1,7 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { User } from '../types';
+import { apiService } from '../services/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -9,6 +10,7 @@ interface AuthContextType {
   logout: () => void;
   user: User | null;
   isLoading: boolean;
+  getAccessToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -19,19 +21,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loginWithRedirect,
     logout: auth0Logout,
     user: auth0User,
-    isLoading
+    isLoading,
+    getAccessTokenSilently
   } = useAuth0();
+
+  // Get and set the access token when authentication state changes
+  useEffect(() => {
+    const setToken = async () => {
+      if (isAuthenticated) {
+        try {
+          const token = await getAccessTokenSilently();
+          apiService.setAuthToken(token);
+        } catch (error) {
+          console.error('Error getting access token:', error);
+          apiService.setAuthToken(null);
+        }
+      } else {
+        apiService.setAuthToken(null);
+      }
+    };
+
+    setToken();
+  }, [isAuthenticated, getAccessTokenSilently]);
 
   const login = () => {
     loginWithRedirect();
   };
 
   const signup = () => {
-    loginWithRedirect({ screen_hint: 'signup' });
+    loginWithRedirect({ 
+      authorizationParams: {
+        screen_hint: 'signup'
+      }
+    });
   };
 
   const logout = () => {
     auth0Logout({ logoutParams: { returnTo: window.location.origin } });
+  };
+
+  // Function to get the access token
+  const getAccessToken = async (): Promise<string | null> => {
+    if (!isAuthenticated) return null;
+    
+    try {
+      return await getAccessTokenSilently();
+    } catch (error) {
+      console.error('Error getting access token:', error);
+      return null;
+    }
   };
 
   // Transform Auth0 user to our User type
@@ -50,7 +88,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signup, 
       logout,
       user,
-      isLoading
+      isLoading,
+      getAccessToken
     }}>
       {children}
     </AuthContext.Provider>
