@@ -131,17 +131,28 @@ export interface UserProfile {
   lastName: string;
   title: string;
   npiNumber: string;
-  practiceId: string;
+  practiceId?: string;
+  profileCompleted?: boolean;
 }
 
-export interface Practice {
+export interface Organization {
   id: string;
   name: string;
-  npiNumber: string;
-  address: string;
-  phone: string;
+  npi: string;
+  logoUrl?: string;
+  locations: Location[];
+  providers?: UserProfile[];
+}
+
+export interface Location {
+  id?: string;
+  name: string;
+  addressLine1: string;
+  addressLine2?: string;
   city: string;
   state: string;
-  zip: string;
-  providers: UserProfile[];
+  zipCode: string;
+  phone: string;
+  email?: string;
+  isPrimary: boolean;
 }

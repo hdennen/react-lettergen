@@ -1,58 +1,57 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { config } from '../config';
+import { createContext, useContext, ReactNode } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 import { User } from '../types';
-import { apiService } from '../services/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string) => Promise<User>;
+  login: () => void;
+  signup: () => void;
   logout: () => void;
+  user: User | null;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const {
+    isAuthenticated,
+    loginWithRedirect,
+    logout: auth0Logout,
+    user: auth0User,
+    isLoading
+  } = useAuth0();
 
-  const login = async (email: string, password: string) => {
-    // TODO: Implement actual authentication
-    setIsAuthenticated(true);
-    // Store token or user data in localStorage
-    localStorage.setItem('isAuthenticated', 'true');
+  const login = () => {
+    loginWithRedirect();
   };
 
-  const signup = async (email: string, password: string): Promise<User> => {
-    // TODO: Implement actual signup
-    await login(email, password);
-    if (config.useMockData) {
-      console.info('Using mock data for signup');
-      return Promise.resolve({
-        id: '123',
-        email: email,
-        firstName: '',
-        lastName: '',
-        title: ''
-      });
-    }
-
-    try {
-      const user = await apiService.signup(email, password);
-      return user;
-    } catch (error) {
-      console.error('Failed to signup:', error);
-      throw error;
-    }
-    
+  const signup = () => {
+    loginWithRedirect({ screen_hint: 'signup' });
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('isAuthenticated');
+    auth0Logout({ logoutParams: { returnTo: window.location.origin } });
   };
 
+  // Transform Auth0 user to our User type
+  const user: User | null = auth0User ? {
+    id: auth0User.sub || '',
+    email: auth0User.email || '',
+    firstName: auth0User.given_name || '',
+    lastName: auth0User.family_name || '',
+    title: ''
+  } : null;
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      login, 
+      signup, 
+      logout,
+      user,
+      isLoading
+    }}>
       {children}
     </AuthContext.Provider>
   );
