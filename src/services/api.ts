@@ -172,7 +172,24 @@ class ApiService {
 
   async updateOrganization(organizationData: Organization): Promise<Organization> {
     try {
-      const response = await this.api.put<Organization>(`/organizations/${organizationData.id}`, organizationData);
+      // Transform the data to match the expected OrganizationCreateDto structure
+      const organizationUpdateDto = {
+        name: organizationData.name,
+        npi: organizationData.npi,
+        logoUrl: organizationData.logoUrl || '',
+        locations: organizationData.locations.map(location => ({
+          name: location.name,
+          addressLine1: location.addressLine1,
+          addressLine2: location.addressLine2 || '',
+          city: location.city,
+          state: location.state,
+          zipCode: location.zipCode,
+          phone: location.phone || '',
+          isPrimary: location.isPrimary
+        }))
+      };
+      
+      const response = await this.api.put<Organization>(`/organizations/${organizationData.id}`, organizationUpdateDto);
       return response.data;
     } catch (error) {
       if (config.useMockData) {
@@ -185,7 +202,24 @@ class ApiService {
 
   async createOrganization(organizationData: Omit<Organization, 'id'>): Promise<Organization> {
     try {
-      const response = await this.api.post<Organization>('/organizations', organizationData);
+      // Transform the data to match the expected OrganizationCreateDto structure
+      const organizationCreateDto = {
+        name: organizationData.name,
+        npi: organizationData.npi,
+        logoUrl: organizationData.logoUrl || '',
+        locations: organizationData.locations.map(location => ({
+          name: location.name,
+          addressLine1: location.addressLine1,
+          addressLine2: location.addressLine2 || '',
+          city: location.city,
+          state: location.state,
+          zipCode: location.zipCode,
+          phone: location.phone || '',
+          isPrimary: location.isPrimary
+        }))
+      };
+      
+      const response = await this.api.post<Organization>('/organizations', organizationCreateDto);
       return response.data;
     } catch (error) {
       if (config.useMockData) {
@@ -315,6 +349,22 @@ class ApiService {
           ...practiceData,
           logo: '' // Add any required fields that weren't in the input
         });
+      }
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async addUserToOrganization(userId: string, organizationId: string, roleId: string = ''): Promise<void> {
+    try {
+      await this.api.post('/UserOrganizations', {
+        userId,
+        organizationId,
+        roleId: roleId || undefined
+      });
+    } catch (error) {
+      if (config.useMockData) {
+        console.info('Using mock data for adding user to organization');
+        return Promise.resolve();
       }
       this.handleError(error as AxiosError);
     }

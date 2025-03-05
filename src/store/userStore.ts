@@ -174,6 +174,8 @@ export const useUserStore = create<UserState>((set, get) => ({
         title: profileSetupForm.personalInfo.title,
         npiNumber: profileSetupForm.personalInfo.npiNumber,
       };
+      
+      // Save the user profile first
       await apiService.updateProfile(updatedUser);
       set({ currentUser: updatedUser });
       
@@ -191,12 +193,14 @@ export const useUserStore = create<UserState>((set, get) => ({
             locations: [
               ...(existingOrg.locations || []).filter(loc => !loc.isPrimary),
               {
+                id: existingOrg.locations?.find(loc => loc.isPrimary)?.id || '', // Keep existing ID if available
                 name: 'Main Office',
                 addressLine1: profileSetupForm.practiceInfo.address,
-                phone: profileSetupForm.practiceInfo.phone,
+                addressLine2: '',
                 city: profileSetupForm.practiceInfo.city,
                 state: profileSetupForm.practiceInfo.state,
                 zipCode: profileSetupForm.practiceInfo.zip,
+                phone: profileSetupForm.practiceInfo.phone,
                 isPrimary: true
               }
             ]
@@ -210,14 +214,17 @@ export const useUserStore = create<UserState>((set, get) => ({
         organizationResponse = await apiService.createOrganization({
           name: profileSetupForm.practiceInfo.name,
           npi: profileSetupForm.practiceInfo.npiNumber,
+          logoUrl: '',
           locations: [
             {
+              id: '', // ID will be assigned by the server
               name: 'Main Office',
               addressLine1: profileSetupForm.practiceInfo.address,
-              phone: profileSetupForm.practiceInfo.phone,
+              addressLine2: '',
               city: profileSetupForm.practiceInfo.city,
               state: profileSetupForm.practiceInfo.state,
               zipCode: profileSetupForm.practiceInfo.zip,
+              phone: profileSetupForm.practiceInfo.phone,
               isPrimary: true
             }
           ]
@@ -237,8 +244,18 @@ export const useUserStore = create<UserState>((set, get) => ({
         practiceId: organizationResponse.id,
         profileCompleted: true
       };
+      
+      // This second update associates the user with the organization
       await apiService.updateProfile(userWithPractice);
       set({ currentUser: userWithPractice });
+      
+      // Explicitly add the user to the organization with a provider role
+      try {
+        await apiService.addUserToOrganization(updatedUser.id || '', organizationResponse.id);
+      } catch (error) {
+        console.warn('Failed to explicitly add user to organization:', error);
+        // Continue anyway since the user profile update should have set the practiceId
+      }
       
       // 5. Update organization providers list
       const providers = await apiService.getOrganizationProviders(organizationResponse.id);
@@ -246,6 +263,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       
       return Promise.resolve();
     } catch (error) {
+      console.error('Error saving profile:', error);
       set({ error: error instanceof Error ? error.message : 'Failed to save profile' });
       throw error;
     } finally {
