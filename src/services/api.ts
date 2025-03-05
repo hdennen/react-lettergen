@@ -170,13 +170,14 @@ class ApiService {
     }
   }
 
-  async updateOrganization(organizationData: Organization): Promise<void> {
+  async updateOrganization(organizationData: Organization): Promise<Organization> {
     try {
-      await this.api.put(`/organizations/${organizationData.id}`, organizationData);
+      const response = await this.api.put<Organization>(`/organizations/${organizationData.id}`, organizationData);
+      return response.data;
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for organization update');
-        return Promise.resolve();
+        return Promise.resolve(organizationData);
       }
       this.handleError(error as AxiosError);
     }

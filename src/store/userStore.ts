@@ -161,6 +161,11 @@ export const useUserStore = create<UserState>((set, get) => ({
       
       if (!currentUser) throw new Error('No user logged in');
       
+      // Verify attestation was checked
+      if (!profileSetupForm.personalInfo.attestation) {
+        throw new Error('You must attest to the accuracy of your information');
+      }
+      
       // 1. Update user profile with personal info
       const updatedUser = {
         ...currentUser,
@@ -172,22 +177,56 @@ export const useUserStore = create<UserState>((set, get) => ({
       await apiService.updateProfile(updatedUser);
       set({ currentUser: updatedUser });
       
-      // 2. Create organization with practice info
-      const organizationResponse = await apiService.createOrganization({
-        name: profileSetupForm.practiceInfo.name,
-        npi: profileSetupForm.practiceInfo.npiNumber,
-        locations: [
-          {
-            name: 'Main Office',
-            addressLine1: profileSetupForm.practiceInfo.address,
-            phone: profileSetupForm.practiceInfo.phone,
-            city: profileSetupForm.practiceInfo.city,
-            state: profileSetupForm.practiceInfo.state,
-            zipCode: profileSetupForm.practiceInfo.zip,
-            isPrimary: true
-          }
-        ]
-      });
+      // 2. Create or update organization with practice info
+      let organizationResponse;
+      
+      // If user already has an organization, update it instead of creating a new one
+      if (currentUser.practiceId) {
+        const existingOrg = get().organization;
+        if (existingOrg) {
+          organizationResponse = await apiService.updateOrganization({
+            ...existingOrg,
+            name: profileSetupForm.practiceInfo.name,
+            npi: profileSetupForm.practiceInfo.npiNumber,
+            locations: [
+              ...(existingOrg.locations || []).filter(loc => !loc.isPrimary),
+              {
+                name: 'Main Office',
+                addressLine1: profileSetupForm.practiceInfo.address,
+                phone: profileSetupForm.practiceInfo.phone,
+                city: profileSetupForm.practiceInfo.city,
+                state: profileSetupForm.practiceInfo.state,
+                zipCode: profileSetupForm.practiceInfo.zip,
+                isPrimary: true
+              }
+            ]
+          });
+        } else {
+          // Fetch the organization if it's not in the store
+          organizationResponse = await apiService.getOrganization(currentUser.practiceId);
+        }
+      } else {
+        // Create new organization
+        organizationResponse = await apiService.createOrganization({
+          name: profileSetupForm.practiceInfo.name,
+          npi: profileSetupForm.practiceInfo.npiNumber,
+          locations: [
+            {
+              name: 'Main Office',
+              addressLine1: profileSetupForm.practiceInfo.address,
+              phone: profileSetupForm.practiceInfo.phone,
+              city: profileSetupForm.practiceInfo.city,
+              state: profileSetupForm.practiceInfo.state,
+              zipCode: profileSetupForm.practiceInfo.zip,
+              isPrimary: true
+            }
+          ]
+        });
+      }
+      
+      if (!organizationResponse) {
+        throw new Error('Failed to create or update organization');
+      }
       
       // 3. Update organization in store
       set({ organization: organizationResponse });
@@ -202,15 +241,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       set({ currentUser: userWithPractice });
       
       // 5. Update organization providers list
-      const providers = [{
-        id: updatedUser.id || '',
-        email: updatedUser.email || '',
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        title: updatedUser.title,
-        npiNumber: updatedUser.npiNumber,
-        practiceId: organizationResponse.id
-      }];
+      const providers = await apiService.getOrganizationProviders(organizationResponse.id);
       set({ organizationProviders: providers });
       
       return Promise.resolve();
