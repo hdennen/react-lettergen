@@ -40,15 +40,26 @@ class ApiService {
 
   async getTemplates(productId: string): Promise<LetterTemplate[]> {
     try {
-      const response = await this.api.get<any[]>(`/templates/byProduct/${productId}`);
-      return response.data.map(this.transformResponse);
+      console.info(`Getting templates for product ${productId}`);
+      const response = await this.api.get<LetterTemplate[]>(`/products/${productId}/templates`);
+      return response.data.map(template => this.transformResponse(template));
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for templates');
-        return Promise.resolve(Object.values(mockData.templates).map(template => ({
-          ...template,
-          productId,
-        })));
+        // Create properly typed templates with productId
+        const templates = Object.values(mockData.templates).map(template => ({
+          id: template.id,
+          name: template.name,
+          productId: productId, // Add the productId parameter
+          isDefault: template.isDefault,
+          type: template.type as 'medical_necessity' | 'appeal',
+          intro: template.intro,
+          rationale: template.rationale,
+          version: template.version,
+          content: template.content,
+        }));
+        
+        return Promise.resolve(templates);
       }
       this.handleError(error as AxiosError);
     }
@@ -56,12 +67,16 @@ class ApiService {
 
   async getProviders(): Promise<Provider[]> {
     try {
+      console.info('Getting providers');
       const response = await this.api.get<Provider[]>('/providers');
       return response.data;
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for providers');
-        return Promise.resolve(mockData.providers);
+        return Promise.resolve(mockData.providers.map(provider => ({
+          ...provider,
+          npiNumber: provider.npi, // Map npi to npiNumber
+        })));
       }
       this.handleError(error as AxiosError);
     }
@@ -69,12 +84,20 @@ class ApiService {
 
   async getPractice(practiceId: string): Promise<Practice> {
     try {
+      console.info(`Getting practice ${practiceId}`);
       const response = await this.api.get<Practice>(`/practices/${practiceId}`);
       return response.data;
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for practice');
-        const practice = mockData.practices[practiceId];
+        // Use type assertion to safely access the practice
+        const practices = mockData.practices as Record<string, Practice>;
+        const practice = practices[practiceId];
+        
+        if (!practice) {
+          throw new Error(`Practice with ID ${practiceId} not found`);
+        }
+        
         return Promise.resolve(practice);
       }
       this.handleError(error as AxiosError);
@@ -83,34 +106,35 @@ class ApiService {
 
   async getOrganization(organizationId: string): Promise<Organization> {
     try {
-      const response = await this.api.get<Organization>(`/v1/organizations/${organizationId}`);
+      console.info(`Getting organization ${organizationId}`);
+      const response = await this.api.get<Organization>(`/organizations/${organizationId}`);
       return response.data;
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for organization');
-        const practice = mockData.practices[organizationId];
+        // Use type assertion to safely access the practice
+        const practices = mockData.practices as Record<string, Practice>;
+        const practice = practices[organizationId];
+        
         if (!practice) {
           throw new Error(`Organization with ID ${organizationId} not found`);
         }
         
+        // Convert Practice to Organization format
         return Promise.resolve({
           id: practice.id,
           name: practice.name,
-          npi: practice.npiNumber,
-          logoUrl: practice.logo,
-          locations: [
-            {
-              id: `loc_${practice.id}`,
-              name: 'Main Office',
-              addressLine1: practice.address,
-              city: practice.city,
-              state: practice.state,
-              zipCode: practice.zip,
-              phone: practice.phone,
-              isPrimary: true
-            }
-          ],
-          providers: practice.providers
+          npi: practice.id, // Using ID as NPI for mock data
+          locations: [{
+            id: '1',
+            name: 'Main Office',
+            addressLine1: practice.address,
+            city: practice.city,
+            state: practice.state,
+            zipCode: practice.zip,
+            phone: practice.phone,
+            isPrimary: true
+          }]
         });
       }
       this.handleError(error as AxiosError);
@@ -119,13 +143,28 @@ class ApiService {
 
   async getOrganizationProviders(organizationId: string): Promise<UserProfile[]> {
     try {
-      const response = await this.api.get<UserProfile[]>(`/v1/organizations/${organizationId}/providers`);
+      console.info(`Getting providers for organization ${organizationId}`);
+      const response = await this.api.get<UserProfile[]>(`/organizations/${organizationId}/providers`);
       return response.data;
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for organization providers');
-        const practice = mockData.practices[organizationId];
-        return Promise.resolve(practice?.providers || []);
+        // Use type assertion to safely check if the practice exists
+        const practices = mockData.practices as Record<string, Practice>;
+        if (!practices[organizationId]) {
+          return Promise.resolve([]);
+        }
+        
+        // Return mock providers with correct type
+        return Promise.resolve(mockData.providers.map(provider => ({
+          id: provider.id,
+          email: `${provider.firstName.toLowerCase()}@example.com`,
+          firstName: provider.firstName,
+          lastName: provider.lastName,
+          title: provider.title,
+          npiNumber: provider.npi,
+          practiceId: provider.practiceId
+        })));
       }
       this.handleError(error as AxiosError);
     }

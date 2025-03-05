@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { US_STATES } from '../constants/states';
@@ -25,45 +25,51 @@ export const ProfileSetup = () => {
   const [searchType, setSearchType] = useState<'name' | 'npi'>('name');
   const [searchResults, setSearchResults] = useState<NPIResponse['results']>([]);
 
-  const [personalInfo, setPersonalInfo] = useState({
-    firstName: '',
-    lastName: '',
-    title: '',
-    npiNumber: '',
-    attestation: false,
-  });
-
-  const [practiceInfo, setPracticeInfo] = useState({
-    name: '',
-    npiNumber: '',
-    address: '',
-    phone: '',
-    city: '',
-    state: '',
-    zip: '',
-  });
-
   const { 
-    currentUser, 
-    updateUserProfile,
-    setOrganization,
-    setOrganizationProviders
+    currentUser,
+    profileSetupForm,
+    updateProfileSetupForm,
+    saveCompleteProfile,
+    isLoading,
+    error
   } = useUserStore();
+
+  // Destructure form state from store for easier access
+  const { personalInfo, practiceInfo } = profileSetupForm;
+
+  // Pre-fill form with current user data if available
+  useEffect(() => {
+    if (currentUser && currentUser.firstName) {
+      updateProfileSetupForm({
+        personalInfo: {
+          ...personalInfo,
+          firstName: currentUser.firstName || '',
+          lastName: currentUser.lastName || '',
+          title: currentUser.title || '',
+          npiNumber: currentUser.npiNumber || '',
+        }
+      });
+    }
+  }, [currentUser]);
 
   const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setPersonalInfo(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    updateProfileSetupForm({
+      personalInfo: {
+        ...personalInfo,
+        [name]: type === 'checkbox' ? checked : value,
+      }
+    });
   };
 
   const handlePracticeInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setPracticeInfo(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    updateProfileSetupForm({
+      practiceInfo: {
+        ...practiceInfo,
+        [name]: value,
+      }
+    });
   };
 
   const handleNPILookup = async () => {
@@ -82,14 +88,17 @@ export const ProfileSetup = () => {
 
   const selectPractice = (practice: NPIResponse['results'][0]) => {
     const address = practice.addresses[0];
-    setPracticeInfo({
-      name: practice.organization_name,
-      npiNumber: practice.number,
-      address: address.address_1,
-      phone: address.telephone_number,
-      city: address.city,
-      state: address.state,
-      zip: address.postal_code,
+    updateProfileSetupForm({
+      practiceInfo: {
+        ...practiceInfo,
+        name: practice.organization_name,
+        npiNumber: practice.number,
+        address: address.address_1,
+        phone: address.telephone_number,
+        city: address.city,
+        state: address.state,
+        zip: address.postal_code,
+      }
     });
     setShowLookupModal(false);
   };
@@ -97,53 +106,8 @@ export const ProfileSetup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // First update the user profile
-      const updatedUser = {
-        ...currentUser,
-        firstName: personalInfo.firstName,
-        lastName: personalInfo.lastName,
-        title: personalInfo.title,
-        npiNumber: personalInfo.npiNumber,
-      };
-      await updateUserProfile(updatedUser);
-
-      // Then create organization and associate user
-      const organizationResponse = await apiService.createOrganization({
-        name: practiceInfo.name,
-        npi: practiceInfo.npiNumber,
-        locations: [
-          {
-            name: 'Main Office',
-            addressLine1: practiceInfo.address,
-            phone: practiceInfo.phone,
-            city: practiceInfo.city,
-            state: practiceInfo.state,
-            zipCode: practiceInfo.zip,
-            isPrimary: true
-          }
-        ]
-      });
-
-      // Update organization in store and associate user with it
-      setOrganization(organizationResponse);
-      
-      // Update user with organization ID
-      await updateUserProfile({
-        ...updatedUser,
-        practiceId: organizationResponse.id
-      });
-
-      // Update organization providers list
-      setOrganizationProviders([{
-        id: updatedUser.id || '', // Ensure id is not undefined
-        email: updatedUser.email || '',
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        title: updatedUser.title,
-        npiNumber: updatedUser.npiNumber,
-        practiceId: organizationResponse.id
-      }]);
-      
+      // Use the store action to save the complete profile
+      await saveCompleteProfile();
       navigate('/');
     } catch (error) {
       console.error('Failed to save profile:', error);
@@ -155,6 +119,11 @@ export const ProfileSetup = () => {
       <div className="max-w-3xl mx-auto space-y-8">
         <div>
           <h2 className="text-3xl font-extrabold text-gray-900">Complete Your Profile</h2>
+          {error && (
+            <div className="mt-2 p-2 bg-red-100 text-red-700 rounded">
+              {error}
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -301,9 +270,14 @@ export const ProfileSetup = () => {
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700"
+            disabled={isLoading}
+            className={`w-full py-3 px-4 rounded-md ${
+              isLoading 
+                ? 'bg-indigo-400 cursor-not-allowed' 
+                : 'bg-indigo-600 hover:bg-indigo-700'
+            } text-white`}
           >
-            Save Profile
+            {isLoading ? 'Saving...' : 'Save Profile'}
           </button>
         </form>
 
