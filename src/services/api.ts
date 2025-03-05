@@ -172,7 +172,7 @@ class ApiService {
 
   async updateOrganization(organizationData: Organization): Promise<void> {
     try {
-      await this.api.put(`/v1/organizations/${organizationData.id}`, organizationData);
+      await this.api.put(`/organizations/${organizationData.id}`, organizationData);
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for organization update');
@@ -184,7 +184,7 @@ class ApiService {
 
   async createOrganization(organizationData: Omit<Organization, 'id'>): Promise<Organization> {
     try {
-      const response = await this.api.post<Organization>('/v1/organizations', organizationData);
+      const response = await this.api.post<Organization>('/organizations', organizationData);
       return response.data;
     } catch (error) {
       if (config.useMockData) {
@@ -267,7 +267,7 @@ class ApiService {
 
   async updateProfile(profileData: UserProfile): Promise<void> {
     try {
-      await this.api.put(`/user/${profileData.id}`, profileData);
+      await this.api.put(`/Users/${profileData.id}`, profileData);
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for profile update');
