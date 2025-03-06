@@ -6,8 +6,9 @@ import { AlertCircle, X } from 'lucide-react';
 
 export const ProfileNotification: React.FC = () => {
   const [dismissed, setDismissed] = useState(false);
+  const [tokenReady, setTokenReady] = useState(false);
   const { currentUser, fetchUserAndOrganization } = useUserStore();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, getAccessToken } = useAuth();
   
   // Check if profile is incomplete (missing required fields)
   const isProfileIncomplete = 
@@ -18,11 +19,28 @@ export const ProfileNotification: React.FC = () => {
      !currentUser.title || 
      !currentUser.npiNumber);
 
+  // First, ensure the token is set in the API service
   useEffect(() => {
     if (isAuthenticated) {
+      const prepareToken = async () => {
+        try {
+          await getAccessToken(); // This will set the token in the API service
+          setTokenReady(true);
+        } catch (error) {
+          console.error('Error preparing token:', error);
+        }
+      };
+      
+      prepareToken();
+    }
+  }, [isAuthenticated, getAccessToken]);
+
+  // Then fetch user data once the token is ready
+  useEffect(() => {
+    if (isAuthenticated && tokenReady) {
       fetchUserAndOrganization().catch(console.error);
     }
-  }, [isAuthenticated, fetchUserAndOrganization]);
+  }, [isAuthenticated, tokenReady, fetchUserAndOrganization]);
 
   if (!isAuthenticated || !isProfileIncomplete || dismissed) {
     return null;

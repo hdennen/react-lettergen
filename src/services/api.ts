@@ -13,6 +13,18 @@ class ApiService {
     },
   });
 
+  // Method to set the auth token for API requests
+  public setAuthToken(token: string | null) {
+    if (token) {
+      this.api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      console.info('Auth token added to API requests');
+      console.log('Auth token:', token);
+    } else {
+      delete this.api.defaults.headers.common['Authorization'];
+      console.info('Auth token removed from API requests');
+    }
+  }
+
   async getProducts(): Promise<Product[]> {
     try {
       const response = await this.api.get<Product[]>('/products');
@@ -28,15 +40,26 @@ class ApiService {
 
   async getTemplates(productId: string): Promise<LetterTemplate[]> {
     try {
-      const response = await this.api.get<any[]>(`/templates/byProduct/${productId}`);
-      return response.data.map(this.transformResponse);
+      console.info(`Getting templates for product ${productId}`);
+      const response = await this.api.get<LetterTemplate[]>(`/products/${productId}/templates`);
+      return response.data.map(template => this.transformResponse(template));
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for templates');
-        return Promise.resolve(Object.values(mockData.templates).map(template => ({
-          ...template,
-          productId,
-        })));
+        // Create properly typed templates with productId
+        const templates = Object.values(mockData.templates).map(template => ({
+          id: template.id,
+          name: template.name,
+          productId: productId, // Add the productId parameter
+          isDefault: template.isDefault,
+          type: template.type as 'medical_necessity' | 'appeal',
+          intro: template.intro,
+          rationale: template.rationale,
+          version: template.version,
+          content: template.content,
+        }));
+        
+        return Promise.resolve(templates);
       }
       this.handleError(error as AxiosError);
     }
@@ -44,12 +67,16 @@ class ApiService {
 
   async getProviders(): Promise<Provider[]> {
     try {
+      console.info('Getting providers');
       const response = await this.api.get<Provider[]>('/providers');
       return response.data;
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for providers');
-        return Promise.resolve(mockData.providers);
+        return Promise.resolve(mockData.providers.map(provider => ({
+          ...provider,
+          npiNumber: provider.npi, // Map npi to npiNumber
+        })));
       }
       this.handleError(error as AxiosError);
     }
@@ -57,12 +84,20 @@ class ApiService {
 
   async getPractice(practiceId: string): Promise<Practice> {
     try {
+      console.info(`Getting practice ${practiceId}`);
       const response = await this.api.get<Practice>(`/practices/${practiceId}`);
       return response.data;
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for practice');
-        const practice = mockData.practices[practiceId];
+        // Use type assertion to safely access the practice
+        const practices = mockData.practices as Record<string, Practice>;
+        const practice = practices[practiceId];
+        
+        if (!practice) {
+          throw new Error(`Practice with ID ${practiceId} not found`);
+        }
+        
         return Promise.resolve(practice);
       }
       this.handleError(error as AxiosError);
@@ -71,34 +106,35 @@ class ApiService {
 
   async getOrganization(organizationId: string): Promise<Organization> {
     try {
-      const response = await this.api.get<Organization>(`/v1/organizations/${organizationId}`);
+      console.info(`Getting organization ${organizationId}`);
+      const response = await this.api.get<Organization>(`/organizations/${organizationId}`);
       return response.data;
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for organization');
-        const practice = mockData.practices[organizationId];
+        // Use type assertion to safely access the practice
+        const practices = mockData.practices as Record<string, Practice>;
+        const practice = practices[organizationId];
+        
         if (!practice) {
           throw new Error(`Organization with ID ${organizationId} not found`);
         }
         
+        // Convert Practice to Organization format
         return Promise.resolve({
           id: practice.id,
           name: practice.name,
-          npi: practice.npiNumber,
-          logoUrl: practice.logo,
-          locations: [
-            {
-              id: `loc_${practice.id}`,
-              name: 'Main Office',
-              addressLine1: practice.address,
-              city: practice.city,
-              state: practice.state,
-              zipCode: practice.zip,
-              phone: practice.phone,
-              isPrimary: true
-            }
-          ],
-          providers: practice.providers
+          npi: practice.id, // Using ID as NPI for mock data
+          locations: [{
+            id: '1',
+            name: 'Main Office',
+            addressLine1: practice.address,
+            city: practice.city,
+            state: practice.state,
+            zipCode: practice.zip,
+            phone: practice.phone,
+            isPrimary: true
+          }]
         });
       }
       this.handleError(error as AxiosError);
@@ -107,25 +143,58 @@ class ApiService {
 
   async getOrganizationProviders(organizationId: string): Promise<UserProfile[]> {
     try {
-      const response = await this.api.get<UserProfile[]>(`/v1/organizations/${organizationId}/providers`);
+      console.info(`Getting providers for organization ${organizationId}`);
+      const response = await this.api.get<UserProfile[]>(`/organizations/${organizationId}/providers`);
       return response.data;
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for organization providers');
-        const practice = mockData.practices[organizationId];
-        return Promise.resolve(practice?.providers || []);
+        // Use type assertion to safely check if the practice exists
+        const practices = mockData.practices as Record<string, Practice>;
+        if (!practices[organizationId]) {
+          return Promise.resolve([]);
+        }
+        
+        // Return mock providers with correct type
+        return Promise.resolve(mockData.providers.map(provider => ({
+          id: provider.id,
+          email: `${provider.firstName.toLowerCase()}@example.com`,
+          firstName: provider.firstName,
+          lastName: provider.lastName,
+          title: provider.title,
+          npiNumber: provider.npi,
+          practiceId: provider.practiceId
+        })));
       }
       this.handleError(error as AxiosError);
     }
   }
 
-  async updateOrganization(organizationData: Organization): Promise<void> {
+  async updateOrganization(organizationData: Organization): Promise<Organization> {
     try {
-      await this.api.put(`/v1/organizations/${organizationData.id}`, organizationData);
+      // Transform the data to match the expected OrganizationCreateDto structure
+      const organizationUpdateDto = {
+        name: organizationData.name,
+        npi: organizationData.npi,
+        logoUrl: organizationData.logoUrl || '',
+        locations: organizationData.locations.map(location => ({
+          name: location.name,
+          addressLine1: location.addressLine1,
+          addressLine2: location.addressLine2 || '',
+          city: location.city,
+          state: location.state,
+          zipCode: location.zipCode,
+          phone: location.phone || '',
+          isPrimary: location.isPrimary
+        }))
+      };
+      
+      const response = await this.api.put<Organization>(`/organizations/${organizationData.id}`, organizationUpdateDto);
+      return response.data;
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for organization update');
-        return Promise.resolve();
+        return Promise.resolve(organizationData);
       }
       this.handleError(error as AxiosError);
     }
@@ -133,7 +202,24 @@ class ApiService {
 
   async createOrganization(organizationData: Omit<Organization, 'id'>): Promise<Organization> {
     try {
-      const response = await this.api.post<Organization>('/v1/organizations', organizationData);
+      // Transform the data to match the expected OrganizationCreateDto structure
+      const organizationCreateDto = {
+        name: organizationData.name,
+        npi: organizationData.npi,
+        logoUrl: organizationData.logoUrl || '',
+        locations: organizationData.locations.map(location => ({
+          name: location.name,
+          addressLine1: location.addressLine1,
+          addressLine2: location.addressLine2 || '',
+          city: location.city,
+          state: location.state,
+          zipCode: location.zipCode,
+          phone: location.phone || '',
+          isPrimary: location.isPrimary
+        }))
+      };
+      
+      const response = await this.api.post<Organization>('/organizations', organizationCreateDto);
       return response.data;
     } catch (error) {
       if (config.useMockData) {
@@ -202,7 +288,8 @@ class ApiService {
 
   async getCurrentUser(): Promise<UserProfile> {
     try {
-      const response = await this.api.get<UserProfile>('/user/current');
+      console.info('Getting current user');
+      const response = await this.api.get<UserProfile>('/Users/current');
       return response.data;
     } catch (error) {
       if (config.useMockData) {
@@ -215,7 +302,7 @@ class ApiService {
 
   async updateProfile(profileData: UserProfile): Promise<void> {
     try {
-      await this.api.put(`/user/${profileData.id}`, profileData);
+      await this.api.put(`/Users/${profileData.id}`, profileData);
     } catch (error) {
       if (config.useMockData) {
         console.info('Using mock data for profile update');
@@ -262,6 +349,22 @@ class ApiService {
           ...practiceData,
           logo: '' // Add any required fields that weren't in the input
         });
+      }
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async addUserToOrganization(userId: string, organizationId: string, roleId: string = ''): Promise<void> {
+    try {
+      await this.api.post('/UserOrganizations', {
+        userId,
+        organizationId,
+        roleId: roleId || undefined
+      });
+    } catch (error) {
+      if (config.useMockData) {
+        console.info('Using mock data for adding user to organization');
+        return Promise.resolve();
       }
       this.handleError(error as AxiosError);
     }

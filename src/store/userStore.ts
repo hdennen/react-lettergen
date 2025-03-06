@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { apiService } from '../services/api';
-import { UserProfile, Organization } from '../types';
+import { UserProfile, Organization } from '../types/index';
 
 interface UserState {
   currentUser: UserProfile | null;
@@ -8,6 +8,26 @@ interface UserState {
   organizationProviders: UserProfile[];
   isLoading: boolean;
   error: string | null;
+  
+  // Form state for profile setup
+  profileSetupForm: {
+    personalInfo: {
+      firstName: string;
+      lastName: string;
+      title: string;
+      npiNumber: string;
+      attestation: boolean;
+    };
+    practiceInfo: {
+      name: string;
+      npiNumber: string;
+      address: string;
+      phone: string;
+      city: string;
+      state: string;
+      zip: string;
+    };
+  };
   
   // Actions
   setCurrentUser: (user: UserProfile) => void;
@@ -17,6 +37,10 @@ interface UserState {
   updateOrganizationInfo: (organizationData: Partial<Organization>) => Promise<void>;
   fetchUserAndOrganization: () => Promise<void>;
   reset: () => void;
+  
+  // Profile setup form actions
+  updateProfileSetupForm: (formData: Partial<UserState['profileSetupForm']>) => void;
+  saveCompleteProfile: () => Promise<void>;
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -33,6 +57,26 @@ export const useUserStore = create<UserState>((set, get) => ({
   organizationProviders: [],
   isLoading: false,
   error: null,
+  
+  // Initialize profile setup form state
+  profileSetupForm: {
+    personalInfo: {
+      firstName: '',
+      lastName: '',
+      title: '',
+      npiNumber: '',
+      attestation: false,
+    },
+    practiceInfo: {
+      name: '',
+      npiNumber: '',
+      address: '',
+      phone: '',
+      city: '',
+      state: '',
+      zip: '',
+    }
+  },
 
   setCurrentUser: (user) => set({ currentUser: user }),
   
@@ -97,12 +141,159 @@ export const useUserStore = create<UserState>((set, get) => ({
       set({ isLoading: false });
     }
   },
+  
+  // Update profile setup form data
+  updateProfileSetupForm: (formData) => {
+    const currentForm = get().profileSetupForm;
+    set({
+      profileSetupForm: {
+        ...currentForm,
+        ...formData
+      }
+    });
+  },
+  
+  // Save complete profile (personal info + practice/organization)
+  saveCompleteProfile: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      const { profileSetupForm, currentUser } = get();
+      
+      if (!currentUser) throw new Error('No user logged in');
+      
+      // Verify attestation was checked
+      if (!profileSetupForm.personalInfo.attestation) {
+        throw new Error('You must attest to the accuracy of your information');
+      }
+      
+      // 1. Update user profile with personal info
+      const updatedUser = {
+        ...currentUser,
+        firstName: profileSetupForm.personalInfo.firstName,
+        lastName: profileSetupForm.personalInfo.lastName,
+        title: profileSetupForm.personalInfo.title,
+        npiNumber: profileSetupForm.personalInfo.npiNumber,
+      };
+      
+      // Save the user profile first
+      await apiService.updateProfile(updatedUser);
+      set({ currentUser: updatedUser });
+      
+      // 2. Create or update organization with practice info
+      let organizationResponse;
+      
+      // If user already has an organization, update it instead of creating a new one
+      if (currentUser.practiceId) {
+        const existingOrg = get().organization;
+        if (existingOrg) {
+          organizationResponse = await apiService.updateOrganization({
+            ...existingOrg,
+            name: profileSetupForm.practiceInfo.name,
+            npi: profileSetupForm.practiceInfo.npiNumber,
+            locations: [
+              ...(existingOrg.locations || []).filter(loc => !loc.isPrimary),
+              {
+                id: existingOrg.locations?.find(loc => loc.isPrimary)?.id || '', // Keep existing ID if available
+                name: 'Main Office',
+                addressLine1: profileSetupForm.practiceInfo.address,
+                addressLine2: '',
+                city: profileSetupForm.practiceInfo.city,
+                state: profileSetupForm.practiceInfo.state,
+                zipCode: profileSetupForm.practiceInfo.zip,
+                phone: profileSetupForm.practiceInfo.phone,
+                isPrimary: true
+              }
+            ]
+          });
+        } else {
+          // Fetch the organization if it's not in the store
+          organizationResponse = await apiService.getOrganization(currentUser.practiceId);
+        }
+      } else {
+        // Create new organization
+        organizationResponse = await apiService.createOrganization({
+          name: profileSetupForm.practiceInfo.name,
+          npi: profileSetupForm.practiceInfo.npiNumber,
+          logoUrl: '',
+          locations: [
+            {
+              id: '', // ID will be assigned by the server
+              name: 'Main Office',
+              addressLine1: profileSetupForm.practiceInfo.address,
+              addressLine2: '',
+              city: profileSetupForm.practiceInfo.city,
+              state: profileSetupForm.practiceInfo.state,
+              zipCode: profileSetupForm.practiceInfo.zip,
+              phone: profileSetupForm.practiceInfo.phone,
+              isPrimary: true
+            }
+          ]
+        });
+      }
+      
+      if (!organizationResponse) {
+        throw new Error('Failed to create or update organization');
+      }
+      
+      // 3. Update organization in store
+      set({ organization: organizationResponse });
+      
+      // 4. Update user with organization ID
+      const userWithPractice = {
+        ...updatedUser,
+        practiceId: organizationResponse.id,
+        profileCompleted: true
+      };
+      
+      // This second update associates the user with the organization
+      await apiService.updateProfile(userWithPractice);
+      set({ currentUser: userWithPractice });
+      
+      // Explicitly add the user to the organization with a provider role
+      try {
+        await apiService.addUserToOrganization(updatedUser.id || '', organizationResponse.id);
+      } catch (error) {
+        console.warn('Failed to explicitly add user to organization:', error);
+        // Continue anyway since the user profile update should have set the practiceId
+      }
+      
+      // 5. Update organization providers list
+      const providers = await apiService.getOrganizationProviders(organizationResponse.id);
+      set({ organizationProviders: providers });
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      set({ error: error instanceof Error ? error.message : 'Failed to save profile' });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 
   reset: () => set({
     currentUser: null,
     organization: null,
     organizationProviders: [],
     isLoading: false,
-    error: null
+    error: null,
+    profileSetupForm: {
+      personalInfo: {
+        firstName: '',
+        lastName: '',
+        title: '',
+        npiNumber: '',
+        attestation: false,
+      },
+      practiceInfo: {
+        name: '',
+        npiNumber: '',
+        address: '',
+        phone: '',
+        city: '',
+        state: '',
+        zip: '',
+      }
+    }
   })
 })); 
