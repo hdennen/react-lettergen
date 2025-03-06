@@ -41,7 +41,7 @@ class ApiService {
   async getTemplates(productId: string): Promise<LetterTemplate[]> {
     try {
       console.info(`Getting templates for product ${productId}`);
-      const response = await this.api.get<LetterTemplate[]>(`/products/${productId}/templates`);
+      const response = await this.api.get<LetterTemplate[]>(`/Templates/byProduct/${productId}`);
       return response.data.map(template => this.transformResponse(template));
     } catch (error) {
       if (config.useMockData) {
