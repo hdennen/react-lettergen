@@ -235,25 +235,150 @@ class ApiService {
 
   async lookupNPIByName(organizationName: string): Promise<NPIResponse> {
     try {
-      const response = await axios.get<NPIResponse>(
-        'https://npiregistry.cms.hhs.gov/api/?version=2.1',
-        { params: { organization_name: organizationName } }
+      // Try the v1 endpoint first
+      try {
+        const response = await this.api.get<NPIResponse>(
+          '/npi/lookup/organization',
+          { 
+            params: { 
+              name: organizationName
+            } 
+          }
+        );
+        
+        if (response.data && response.data.results && response.data.results.length > 0) {
+          return response.data;
+        }
+      } catch (error) {
+        console.log('v1 endpoint failed, trying api endpoint');
+      }
+      
+      // Fall back to the api endpoint
+      const response = await this.api.get<NPIResponse>(
+        '/api/NPI/lookup/organization',
+        { 
+          params: { 
+            name: organizationName
+          } 
+        }
       );
+      
+      // Check if we got valid results
+      if (!response.data || !response.data.results) {
+        return { results: [] };
+      }
+      
       return response.data;
     } catch (error) {
-      this.handleError(error as AxiosError);
+      console.error('NPI lookup by name failed:', error);
+      
+      // If we're using mock data, return a mock response
+      if (config.useMockData) {
+        console.info('Using mock data for NPI lookup');
+        return mockData.npiLookupByName(organizationName);
+      }
+      
+      return { results: [] };
+    }
+  }
+
+  async lookupNPIByProviderName(firstName: string, lastName: string): Promise<NPIResponse> {
+    try {
+      // Try the v1 endpoint first
+      try {
+        const response = await this.api.get<NPIResponse>(
+          '/npi/lookup/provider',
+          { 
+            params: { 
+              firstName,
+              lastName
+            } 
+          }
+        );
+        
+        if (response.data && response.data.results && response.data.results.length > 0) {
+          return response.data;
+        }
+      } catch (error) {
+        console.log('v1 endpoint failed, trying api endpoint');
+      }
+      
+      // Fall back to the api endpoint
+      const response = await this.api.get<NPIResponse>(
+        '/api/NPI/lookup/provider',
+        { 
+          params: { 
+            firstName,
+            lastName
+          } 
+        }
+      );
+      
+      // Check if we got valid results
+      if (!response.data || !response.data.results) {
+        return { results: [] };
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('NPI lookup by provider name failed:', error);
+      
+      // If we're using mock data, return a mock response
+      if (config.useMockData) {
+        console.info('Using mock data for NPI lookup');
+        return mockData.npiLookupByProviderName(firstName, lastName);
+      }
+      
+      return { results: [] };
     }
   }
 
   async lookupNPIByNumber(npiNumber: string): Promise<NPIResponse> {
     try {
-      const response = await axios.get<NPIResponse>(
-        'https://npiregistry.cms.hhs.gov/api/?version=2.1',
-        { params: { number: npiNumber } }
+      // Try the v1 endpoint first
+      try {
+        const response = await this.api.get<NPIResponse>(
+          '/v1/npi/lookup/number',
+          { 
+            params: { 
+              number: npiNumber
+            } 
+          }
+        );
+        
+        if (response.data && response.data.results && response.data.results.length > 0) {
+          return response.data;
+        }
+      } catch (error) {
+        console.log('v1 endpoint failed, trying api endpoint');
+      }
+      
+      // Fall back to the api endpoint
+      const response = await this.api.get<NPIResponse>(
+        '/api/NPI/lookup/number',
+        { 
+          params: { 
+            number: npiNumber
+          } 
+        }
       );
+      
+      // Check if we got valid results
+      if (!response.data || !response.data.results) {
+        return { results: [] };
+      }
+      
       return response.data;
     } catch (error) {
-      this.handleError(error as AxiosError);
+      console.error('NPI lookup by number failed:', error);
+      
+      // If we're using mock data, return a mock response
+      if (config.useMockData) {
+        console.info('Using mock data for NPI lookup');
+        return mockData.npiLookupByNumber(npiNumber);
+      }
+      
+      return { results: [] };
     }
   }
 

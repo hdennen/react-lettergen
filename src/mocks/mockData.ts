@@ -73,5 +73,100 @@ export const mockData = {
 
   practiceProviders: [
     // ... array of mock providers
-  ]
+  ],
+
+  // Add NPI lookup mock functions
+  npiLookupByName: (organizationName: string) => {
+    return {
+      results: [
+        {
+          organization_name: `${organizationName} Medical Center`,
+          number: '1234567890',
+          addresses: [
+            {
+              address_1: '123 Main St',
+              city: 'Anytown',
+              state: 'CA',
+              postal_code: '12345',
+              telephone_number: '555-123-4567'
+            }
+          ]
+        },
+        {
+          organization_name: `${organizationName} Hospital`,
+          number: '0987654321',
+          addresses: [
+            {
+              address_1: '456 Oak Ave',
+              city: 'Somewhere',
+              state: 'NY',
+              postal_code: '54321',
+              telephone_number: '555-987-6543'
+            }
+          ]
+        }
+      ]
+    };
+  },
+
+  npiLookupByProviderName: (firstName: string, lastName: string) => {
+    return {
+      results: [
+        {
+          basic: {
+            first_name: firstName,
+            last_name: lastName,
+            credential: 'MD'
+          },
+          number: '1122334455',
+          addresses: [
+            {
+              address_1: '789 Pine St',
+              city: 'Elsewhere',
+              state: 'TX',
+              postal_code: '67890',
+              telephone_number: '555-321-7654'
+            }
+          ]
+        },
+        {
+          basic: {
+            first_name: firstName,
+            last_name: lastName,
+            credential: 'DO'
+          },
+          number: '5544332211',
+          addresses: [
+            {
+              address_1: '321 Elm Blvd',
+              city: 'Nowhere',
+              state: 'FL',
+              postal_code: '09876',
+              telephone_number: '555-765-4321'
+            }
+          ]
+        }
+      ]
+    };
+  },
+
+  npiLookupByNumber: (npiNumber: string) => {
+    return {
+      results: [
+        {
+          organization_name: 'Sample Organization',
+          number: npiNumber,
+          addresses: [
+            {
+              address_1: '555 Medical Plaza',
+              city: 'Healthville',
+              state: 'WA',
+              postal_code: '13579',
+              telephone_number: '555-555-5555'
+            }
+          ]
+        }
+      ]
+    };
+  },
 }; 
