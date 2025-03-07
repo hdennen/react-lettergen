@@ -7,8 +7,13 @@ import { useUserStore } from '../store/userStore';
 import { AlertCircle, CheckCircle2, Link as LinkIcon } from 'lucide-react';
 
 interface NPIResponse {
-  results: {
-    organization_name: string;
+  results: Array<{
+    organization_name?: string;
+    basic?: {
+      first_name?: string;
+      last_name?: string;
+      credential?: string;
+    };
     number: string;
     addresses: Array<{
       address_1: string;
@@ -17,7 +22,7 @@ interface NPIResponse {
       postal_code: string;
       telephone_number: string;
     }>;
-  }[];
+  }>;
 }
 
 export const ProfileSetup = () => {
@@ -25,8 +30,11 @@ export const ProfileSetup = () => {
   const location = useLocation();
   const [showLookupModal, setShowLookupModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState<'name' | 'npi'>('name');
+  const [searchType, setSearchType] = useState<'organization' | 'provider' | 'npi'>('organization');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [searchResults, setSearchResults] = useState<NPIResponse['results']>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isEpicConnected, setIsEpicConnected] = useState(false);
   const [isCheckingEpicConnection, setIsCheckingEpicConnection] = useState(true);
   const [epicConnectionMessage, setEpicConnectionMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -110,27 +118,60 @@ export const ProfileSetup = () => {
 
   const handleNPILookup = async () => {
     try {
+      setSearchResults([]);
+      
+      if (searchType === 'npi' && !searchTerm.trim()) {
+        return;
+      }
+      
+      if (searchType === 'provider' && (!firstName.trim() || !lastName.trim())) {
+        alert('Please enter both first and last name for provider search.');
+        return;
+      }
+      
+      if (searchType === 'organization' && !searchTerm.trim()) {
+        return;
+      }
+      
+      setIsSearching(true);
+      
       let response;
       if (searchType === 'npi') {
         response = await apiService.lookupNPIByNumber(searchTerm);
+      } else if (searchType === 'provider') {
+        response = await apiService.lookupNPIByProviderName(firstName, lastName);
       } else {
         response = await apiService.lookupNPIByName(searchTerm);
       }
-      setSearchResults(response.results);
+      
+      if (response && response.results && response.results.length > 0) {
+        setSearchResults(response.results);
+      } else {
+        // Show a message that no results were found
+        alert('No results found. Please try a different search term.');
+      }
     } catch (error) {
       console.error('NPI lookup failed:', error);
+      alert('Error looking up NPI. Please try again.');
+    } finally {
+      setIsSearching(false);
     }
   };
 
   const selectPractice = (practice: NPIResponse['results'][0]) => {
     const address = practice.addresses[0];
+    
+    // Determine the name based on whether it's an organization or individual
+    const name = practice.organization_name || 
+      (practice.basic ? `${practice.basic.first_name} ${practice.basic.last_name}` : 'Unknown');
+    
     updateProfileSetupForm({
       practiceInfo: {
         ...practiceInfo,
-        name: practice.organization_name,
+        name: name,
         npiNumber: practice.number,
         address: address.address_1,
-        phone: address.telephone_number,
+        phone: address.telephone_number || '',
         city: address.city,
         state: address.state,
         zip: address.postal_code,
@@ -404,46 +445,93 @@ export const ProfileSetup = () => {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl">
             <h3 className="text-xl font-bold mb-4">Practice Lookup</h3>
-            <div className="flex gap-4 mb-4">
+            <div className="mb-4">
               <select
                 value={searchType}
-                onChange={(e) => setSearchType(e.target.value as 'name' | 'npi')}
-                className="input-field"
+                onChange={(e) => setSearchType(e.target.value as 'organization' | 'provider' | 'npi')}
+                className="input-field w-full mb-4"
+                disabled={isSearching}
               >
-                <option value="name">Search by Name</option>
-                <option value="npi">Search by NPI</option>
+                <option value="organization">Search by Organization Name</option>
+                <option value="provider">Search by Provider Name</option>
+                <option value="npi">Search by NPI Number</option>
               </select>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={searchType === 'npi' ? 'Enter NPI Number' : 'Enter Practice Name'}
-                className="input-field flex-1"
-              />
+              
+              {searchType === 'provider' ? (
+                <div className="flex gap-4">
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First Name"
+                    className="input-field flex-1"
+                    disabled={isSearching}
+                  />
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last Name"
+                    className="input-field flex-1"
+                    disabled={isSearching}
+                  />
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder={searchType === 'npi' ? 'Enter NPI Number' : 'Enter Organization Name'}
+                  className="input-field w-full"
+                  disabled={isSearching}
+                />
+              )}
+            </div>
+            
+            <div className="flex justify-end mb-4">
               <button
                 onClick={handleNPILookup}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md"
+                className={`${isSearching ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'} text-white px-4 py-2 rounded-md flex items-center justify-center min-w-[100px]`}
+                disabled={isSearching}
               >
-                Search
+                {isSearching ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Searching...
+                  </>
+                ) : 'Search'}
               </button>
             </div>
 
             <div className="max-h-96 overflow-y-auto">
-              {searchResults.map((result, index) => (
-                <div
-                  key={index}
-                  className="border p-4 mb-2 rounded cursor-pointer hover:bg-gray-50"
-                  onClick={() => selectPractice(result)}
-                >
-                  <h4 className="font-bold">{result.organization_name}</h4>
-                  <p>NPI: {result.number}</p>
-                  <p>{result.addresses[0].address_1}</p>
-                  <p>
-                    {result.addresses[0].city}, {result.addresses[0].state}{' '}
-                    {result.addresses[0].postal_code}
-                  </p>
+              {isSearching ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-4"></div>
+                  <p className="text-gray-600">Searching NPI Registry...</p>
                 </div>
-              ))}
+              ) : (
+                searchResults.map((result, index) => (
+                  <div
+                    key={index}
+                    className="border p-4 mb-2 rounded cursor-pointer hover:bg-gray-50"
+                    onClick={() => selectPractice(result)}
+                  >
+                    <h4 className="font-bold">
+                      {result.organization_name || 
+                        (result.basic ? `${result.basic.first_name} ${result.basic.last_name}${result.basic.credential ? `, ${result.basic.credential}` : ''}` : 'Unknown')}
+                    </h4>
+                    <p>NPI: {result.number}</p>
+                    <p>{result.addresses[0].address_1}</p>
+                    <p>
+                      {result.addresses[0].city}, {result.addresses[0].state}{' '}
+                      {result.addresses[0].postal_code}
+                    </p>
+                    {result.addresses[0].telephone_number && (
+                      <p>Phone: {result.addresses[0].telephone_number}</p>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
 
             <button

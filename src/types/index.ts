@@ -111,8 +111,13 @@ export interface User {
 }
 
 export interface NPIResponse {
-  results: {
-    organization_name: string;
+  results: Array<{
+    organization_name?: string;
+    basic?: {
+      first_name?: string;
+      last_name?: string;
+      credential?: string;
+    };
     number: string;
     addresses: Array<{
       address_1: string;
@@ -121,7 +126,7 @@ export interface NPIResponse {
       postal_code: string;
       telephone_number: string;
     }>;
-  }[];
+  }>;
 }
 
 export interface UserProfile {
