@@ -15,7 +15,7 @@ export const NavBar = () => {
             <div className="flex-shrink-0">
               <Link to="/">
                 <img
-                  className="h-[100px] w-[300px] object-contain"
+                  className="h-16 w-auto object-contain"
                   src={logo}
                   alt="ACEHOUND - Access Correspondence Expert"
                 />
