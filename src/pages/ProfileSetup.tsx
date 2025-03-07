@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { epicService } from '../services/epicService';
 import { US_STATES } from '../constants/states';
 import { useUserStore } from '../store/userStore';
+import { AlertCircle, CheckCircle2, Link as LinkIcon } from 'lucide-react';
 
 interface NPIResponse {
   results: {
@@ -20,10 +22,14 @@ interface NPIResponse {
 
 export const ProfileSetup = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showLookupModal, setShowLookupModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchType, setSearchType] = useState<'name' | 'npi'>('name');
   const [searchResults, setSearchResults] = useState<NPIResponse['results']>([]);
+  const [isEpicConnected, setIsEpicConnected] = useState(false);
+  const [isCheckingEpicConnection, setIsCheckingEpicConnection] = useState(true);
+  const [epicConnectionMessage, setEpicConnectionMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const { 
     currentUser,
@@ -36,6 +42,36 @@ export const ProfileSetup = () => {
 
   // Destructure form state from store for easier access
   const { personalInfo, practiceInfo } = profileSetupForm;
+
+  // Check Epic connection status on component mount
+  useEffect(() => {
+    const checkEpicConnection = async () => {
+      try {
+        const isConnected = await epicService.isConnectedToEpic();
+        setIsEpicConnected(isConnected);
+      } catch (error) {
+        console.error('Error checking Epic connection:', error);
+      } finally {
+        setIsCheckingEpicConnection(false);
+      }
+    };
+
+    checkEpicConnection();
+  }, []);
+
+  // Check for Epic connection success message from callback
+  useEffect(() => {
+    if (location.state && location.state.epicConnected) {
+      setEpicConnectionMessage({
+        type: 'success',
+        text: location.state.message || 'Successfully connected to Epic!'
+      });
+      setIsEpicConnected(true);
+      
+      // Clear the location state to prevent showing the message on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Pre-fill form with current user data if available
   useEffect(() => {
@@ -114,230 +150,311 @@ export const ProfileSetup = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto space-y-8">
-        <div>
-          <h2 className="text-3xl font-extrabold text-gray-900">Complete Your Profile</h2>
-          {error && (
-            <div className="mt-2 p-2 bg-red-100 text-red-700 rounded">
-              {error}
-            </div>
-          )}
-        </div>
+  const handleConnectWithEpic = async () => {
+    try {
+      await epicService.initiateEpicAuth();
+    } catch (error) {
+      console.error('Error connecting to Epic:', error);
+      setEpicConnectionMessage({
+        type: 'error',
+        text: 'Failed to connect to Epic. Please try again.'
+      });
+    }
+  };
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Personal Information Section */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-xl font-bold mb-4">Personal Information</h3>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <input
-                type="text"
-                name="firstName"
-                placeholder="First Name"
-                value={personalInfo.firstName}
-                onChange={handlePersonalInfoChange}
-                className="input-field"
-                required
-              />
-              <input
-                type="text"
-                name="lastName"
-                placeholder="Last Name"
-                value={personalInfo.lastName}
-                onChange={handlePersonalInfoChange}
-                className="input-field"
-                required
-              />
-              <input
-                type="text"
-                name="title"
-                placeholder="Title"
-                value={personalInfo.title}
-                onChange={handlePersonalInfoChange}
-                className="input-field"
-                required
-              />
-              <input
-                type="text"
-                name="npiNumber"
-                placeholder="NPI Number"
-                value={personalInfo.npiNumber}
-                onChange={handlePersonalInfoChange}
-                className="input-field"
-                required
-              />
-            </div>
-            <div className="mt-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="attestation"
-                  checked={personalInfo.attestation}
-                  onChange={handlePersonalInfoChange}
-                  className="mr-2"
-                  required
-                />
-                <span className="text-sm">
-                  I attest that I am a healthcare professional seeking an account for my own use.
-                </span>
-              </label>
-            </div>
+  const handleDisconnectFromEpic = async () => {
+    try {
+      await epicService.disconnectFromEpic();
+      setIsEpicConnected(false);
+      setEpicConnectionMessage({
+        type: 'success',
+        text: 'Successfully disconnected from Epic.'
+      });
+    } catch (error) {
+      console.error('Error disconnecting from Epic:', error);
+      setEpicConnectionMessage({
+        type: 'error',
+        text: 'Failed to disconnect from Epic. Please try again.'
+      });
+    }
+  };
+
+  const renderEpicConnectionSection = () => {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <LinkIcon className="mr-2 h-5 w-5 text-blue-600" />
+          Epic Integration
+        </h2>
+        
+        {epicConnectionMessage && (
+          <div className={`mb-4 p-3 rounded-md ${epicConnectionMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+            {epicConnectionMessage.type === 'success' ? (
+              <CheckCircle2 className="inline-block mr-2 h-5 w-5" />
+            ) : (
+              <AlertCircle className="inline-block mr-2 h-5 w-5" />
+            )}
+            {epicConnectionMessage.text}
           </div>
-
-          {/* Practice Information Section */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-xl font-bold mb-4">Practice Information</h3>
+        )}
+        
+        {isCheckingEpicConnection ? (
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-gray-600">Checking connection status...</span>
+          </div>
+        ) : isEpicConnected ? (
+          <div>
+            <div className="flex items-center mb-4 text-green-600">
+              <CheckCircle2 className="mr-2 h-5 w-5" />
+              <span>Connected to Epic</span>
+            </div>
             <button
               type="button"
-              onClick={() => setShowLookupModal(true)}
-              className="mb-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700"
+              onClick={handleDisconnectFromEpic}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
             >
-              Practice Information Lookup
+              Disconnect from Epic
             </button>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <input
-                type="text"
-                name="name"
-                placeholder="Practice Name"
-                value={practiceInfo.name}
-                onChange={handlePracticeInfoChange}
-                className="input-field"
-                required
-              />
-              <input
-                type="text"
-                name="npiNumber"
-                placeholder="Practice NPI Number"
-                value={practiceInfo.npiNumber}
-                onChange={handlePracticeInfoChange}
-                className="input-field"
-                required
-              />
-              <input
-                type="text"
-                name="address"
-                placeholder="Practice Address"
-                value={practiceInfo.address}
-                onChange={handlePracticeInfoChange}
-                className="input-field"
-                required
-              />
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Practice Phone Number"
-                value={practiceInfo.phone}
-                onChange={handlePracticeInfoChange}
-                className="input-field"
-                required
-              />
-              <input
-                type="text"
-                name="city"
-                placeholder="Practice City"
-                value={practiceInfo.city}
-                onChange={handlePracticeInfoChange}
-                className="input-field"
-                required
-              />
-              <select
-                name="state"
-                value={practiceInfo.state}
-                onChange={handlePracticeInfoChange}
-                className="input-field"
-                required
-              >
-                <option value="">Select State</option>
-                {US_STATES.map(state => (
-                  <option key={state.abbreviation} value={state.abbreviation}>
-                    {state.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="text"
-                name="zip"
-                placeholder="Practice ZIP Code"
-                value={practiceInfo.zip}
-                onChange={handlePracticeInfoChange}
-                className="input-field"
-                required
-              />
-            </div>
           </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`w-full py-3 px-4 rounded-md ${
-              isLoading 
-                ? 'bg-indigo-400 cursor-not-allowed' 
-                : 'bg-indigo-600 hover:bg-indigo-700'
-            } text-white`}
-          >
-            {isLoading ? 'Saving...' : 'Save Profile'}
-          </button>
-        </form>
-
-        {/* NPI Lookup Modal */}
-        {showLookupModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl">
-              <h3 className="text-xl font-bold mb-4">Practice Lookup</h3>
-              <div className="flex gap-4 mb-4">
-                <select
-                  value={searchType}
-                  onChange={(e) => setSearchType(e.target.value as 'name' | 'npi')}
-                  className="input-field"
-                >
-                  <option value="name">Search by Name</option>
-                  <option value="npi">Search by NPI</option>
-                </select>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={searchType === 'npi' ? 'Enter NPI Number' : 'Enter Practice Name'}
-                  className="input-field flex-1"
-                />
-                <button
-                  onClick={handleNPILookup}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-md"
-                >
-                  Search
-                </button>
-              </div>
-
-              <div className="max-h-96 overflow-y-auto">
-                {searchResults.map((result, index) => (
-                  <div
-                    key={index}
-                    className="border p-4 mb-2 rounded cursor-pointer hover:bg-gray-50"
-                    onClick={() => selectPractice(result)}
-                  >
-                    <h4 className="font-bold">{result.organization_name}</h4>
-                    <p>NPI: {result.number}</p>
-                    <p>{result.addresses[0].address_1}</p>
-                    <p>
-                      {result.addresses[0].city}, {result.addresses[0].state}{' '}
-                      {result.addresses[0].postal_code}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setShowLookupModal(false)}
-                className="mt-4 bg-gray-200 text-gray-800 px-4 py-2 rounded-md"
-              >
-                Close
-              </button>
-            </div>
+        ) : (
+          <div>
+            <p className="mb-4 text-gray-600">
+              Connect your account with Epic to streamline your workflow and access patient data directly.
+            </p>
+            <button
+              type="button"
+              onClick={handleConnectWithEpic}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center"
+            >
+              <LinkIcon className="mr-2 h-5 w-5" />
+              Connect with Epic
+            </button>
           </div>
         )}
       </div>
+    );
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <h1 className="text-2xl font-bold mb-6">Complete Your Profile</h1>
+      
+      {/* Epic Connection Section */}
+      {renderEpicConnectionSection()}
+      
+      {/* Rest of the form */}
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Personal Information Section */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-xl font-bold mb-4">Personal Information</h3>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <input
+              type="text"
+              name="firstName"
+              placeholder="First Name"
+              value={personalInfo.firstName}
+              onChange={handlePersonalInfoChange}
+              className="input-field"
+              required
+            />
+            <input
+              type="text"
+              name="lastName"
+              placeholder="Last Name"
+              value={personalInfo.lastName}
+              onChange={handlePersonalInfoChange}
+              className="input-field"
+              required
+            />
+            <input
+              type="text"
+              name="title"
+              placeholder="Title"
+              value={personalInfo.title}
+              onChange={handlePersonalInfoChange}
+              className="input-field"
+              required
+            />
+            <input
+              type="text"
+              name="npiNumber"
+              placeholder="NPI Number"
+              value={personalInfo.npiNumber}
+              onChange={handlePersonalInfoChange}
+              className="input-field"
+              required
+            />
+          </div>
+          <div className="mt-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="attestation"
+                checked={personalInfo.attestation}
+                onChange={handlePersonalInfoChange}
+                className="mr-2"
+                required
+              />
+              <span className="text-sm">
+                I attest that I am a healthcare professional seeking an account for my own use.
+              </span>
+            </label>
+          </div>
+        </div>
+
+        {/* Practice Information Section */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-xl font-bold mb-4">Practice Information</h3>
+          <button
+            type="button"
+            onClick={() => setShowLookupModal(true)}
+            className="mb-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700"
+          >
+            Practice Information Lookup
+          </button>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <input
+              type="text"
+              name="name"
+              placeholder="Practice Name"
+              value={practiceInfo.name}
+              onChange={handlePracticeInfoChange}
+              className="input-field"
+              required
+            />
+            <input
+              type="text"
+              name="npiNumber"
+              placeholder="Practice NPI Number"
+              value={practiceInfo.npiNumber}
+              onChange={handlePracticeInfoChange}
+              className="input-field"
+              required
+            />
+            <input
+              type="text"
+              name="address"
+              placeholder="Practice Address"
+              value={practiceInfo.address}
+              onChange={handlePracticeInfoChange}
+              className="input-field"
+              required
+            />
+            <input
+              type="tel"
+              name="phone"
+              placeholder="Practice Phone Number"
+              value={practiceInfo.phone}
+              onChange={handlePracticeInfoChange}
+              className="input-field"
+              required
+            />
+            <input
+              type="text"
+              name="city"
+              placeholder="Practice City"
+              value={practiceInfo.city}
+              onChange={handlePracticeInfoChange}
+              className="input-field"
+              required
+            />
+            <select
+              name="state"
+              value={practiceInfo.state}
+              onChange={handlePracticeInfoChange}
+              className="input-field"
+              required
+            >
+              <option value="">Select State</option>
+              {US_STATES.map(state => (
+                <option key={state.abbreviation} value={state.abbreviation}>
+                  {state.name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              name="zip"
+              placeholder="Practice ZIP Code"
+              value={practiceInfo.zip}
+              onChange={handlePracticeInfoChange}
+              className="input-field"
+              required
+            />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className={`w-full py-3 px-4 rounded-md ${
+            isLoading 
+              ? 'bg-indigo-400 cursor-not-allowed' 
+              : 'bg-indigo-600 hover:bg-indigo-700'
+          } text-white`}
+        >
+          {isLoading ? 'Saving...' : 'Save Profile'}
+        </button>
+      </form>
+
+      {/* NPI Lookup Modal */}
+      {showLookupModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl">
+            <h3 className="text-xl font-bold mb-4">Practice Lookup</h3>
+            <div className="flex gap-4 mb-4">
+              <select
+                value={searchType}
+                onChange={(e) => setSearchType(e.target.value as 'name' | 'npi')}
+                className="input-field"
+              >
+                <option value="name">Search by Name</option>
+                <option value="npi">Search by NPI</option>
+              </select>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={searchType === 'npi' ? 'Enter NPI Number' : 'Enter Practice Name'}
+                className="input-field flex-1"
+              />
+              <button
+                onClick={handleNPILookup}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md"
+              >
+                Search
+              </button>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto">
+              {searchResults.map((result, index) => (
+                <div
+                  key={index}
+                  className="border p-4 mb-2 rounded cursor-pointer hover:bg-gray-50"
+                  onClick={() => selectPractice(result)}
+                >
+                  <h4 className="font-bold">{result.organization_name}</h4>
+                  <p>NPI: {result.number}</p>
+                  <p>{result.addresses[0].address_1}</p>
+                  <p>
+                    {result.addresses[0].city}, {result.addresses[0].state}{' '}
+                    {result.addresses[0].postal_code}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setShowLookupModal(false)}
+              className="mt-4 bg-gray-200 text-gray-800 px-4 py-2 rounded-md"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
