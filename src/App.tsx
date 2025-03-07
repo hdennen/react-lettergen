@@ -11,6 +11,7 @@ import { Signup } from './pages/Signup';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ProfileSetup } from './pages/ProfileSetup';
 import { ProfileNotification } from './components/ProfileNotification';
+import { EpicCallback } from './pages/EpicCallback';
 import { config } from './config';
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
                   <ProfileSetup />
                 </ProtectedRoute>
               } />
+              <Route path="/epic/callback" element={<EpicCallback />} />
               
               {/* Protected routes */}
               <Route

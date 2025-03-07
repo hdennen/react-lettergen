@@ -408,6 +408,43 @@ class ApiService {
       this.handleError(error as AxiosError);
     }
   }
+
+  // Epic integration methods
+  async getEpicAuthUrl(): Promise<{ authorizationUrl: string }> {
+    try {
+      const response = await this.api.get<{ authorizationUrl: string }>('/epic/auth/url');
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async handleEpicCallback(code: string, state: string): Promise<any> {
+    try {
+      const response = await this.api.post('/epic/auth/callback', { code, state });
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getEpicConnectionStatus(): Promise<{ isConnected: boolean }> {
+    try {
+      const response = await this.api.get<{ isConnected: boolean }>('/epic/connection/status');
+      return response.data;
+    } catch (error) {
+      console.error('Error checking Epic connection status:', error);
+      return { isConnected: false };
+    }
+  }
+
+  async disconnectFromEpic(): Promise<void> {
+    try {
+      await this.api.post('/v1/epic/connection/disconnect');
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
 }
 
 export const apiService = new ApiService(); 
